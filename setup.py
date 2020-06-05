@@ -6,8 +6,8 @@ with open("README.md", "r") as fh:
 setuptools.setup(
     name="academy_reports",
     version="0.0.1",
-    author="Rafael Marín",
-    author_email="marinraf@gmail.com",
+    author="Balma Serrano",
+    author_email="balmaserrano@gmail.com",
     description="Package to parse data and create reports",
     long_description=long_description,
     long_description_content_type="text/markdown",
