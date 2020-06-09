@@ -1,11 +1,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from matplotlib.lines import Line2D
 import numpy as np
-from datetime import datetime
 from matplotlib.backends.backend_pdf import PdfPages
-from academy_reports import utils
 
 # PLOT COLORS
 correct_c = 'green'
@@ -37,7 +34,11 @@ def touchteaching_daily (df, save_path, date):
     df.loc[(df.STATE_Correct_first_START > 0, 'trial_result')] = 'correct'
     df.loc[(df.STATE_Correct_first_START > 0, 'colors')] = correct_c
     df['resp_latency'] = df.STATE_Response_window_END - df.STATE_Response_window_START
-    df['lick_time'] = df.STATE_Correct_first_reward_START.fillna(0) + df.STATE_Miss_reward_START.fillna(0)
+
+    if set(['STATE_Miss_reward_START']).issubset(df.columns):
+        df['lick_time'] = df.STATE_Correct_first_reward_START.fillna(0) + df.STATE_Miss_reward_START.fillna(0)
+    else:
+        df['lick_time'] = df.STATE_Correct_first_reward_START
     df['lick_latency'] = df.lick_time - df.STATE_Response_window_END
 
 

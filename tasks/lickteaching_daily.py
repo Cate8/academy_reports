@@ -1,9 +1,5 @@
-import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from matplotlib.lines import Line2D
-import numpy as np
-from datetime import datetime
 from matplotlib.backends.backend_pdf import PdfPages
 
 # PLOT COLORS
@@ -11,7 +7,6 @@ correct_c = 'green'
 miss_c = 'black'
 water_c = 'teal'
 lines_c = 'gray'
-
 
 
 def lickteaching_daily (df, save_path, date):

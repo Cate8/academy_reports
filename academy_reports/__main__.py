@@ -5,6 +5,7 @@ import pandas as pd
 from datetime import datetime
 from tasks.lickteaching_daily import lickteaching_daily
 from tasks.touchteaching_daily import touchteaching_daily
+from tasks.stagetraining_daily import stagetraining_daily
 from tasks.intersession import intersession
 
 
@@ -28,7 +29,7 @@ def main():
             os.makedirs(save_directory)
 
         # INTERSESSIONS
-        file_name_intersesion = subject + '_intersession.pdf'
+        file_name_intersesion = '_intersession.pdf'
         save_path_intersesion = os.path.join(save_directory, file_name_intersesion)
         try:
             intersession(df.copy(), save_path_intersesion)
@@ -40,6 +41,7 @@ def main():
         for sess, session in df.groupby('session'):
             subject = session.subject.iloc[0]
             task = session.task.iloc[0]
+            print(task[0:13])
             stage = session.stage.iloc[0]
             date = datetime.fromtimestamp(session.STATE_Start_task_START.iloc[0]).strftime("%Y%m%d-%H%M%S")
 
@@ -50,6 +52,8 @@ def main():
                 lickteaching_daily(session.copy(), save_path, date)
             elif task == 'TouchTeaching':
                 touchteaching_daily(session.copy(), save_path, date)
+            elif task[0:13] == 'StageTraining':
+                stagetraining_daily(session.copy(), save_path, date)
             else:
                 print('Task not found for file:', path, 'task:', task)
 

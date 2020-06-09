@@ -11,19 +11,25 @@ correct_c = 'green'
 miss_c = 'black'
 water_c = 'teal'
 all_poke_c = '#5B1132'
-second_poke_c = '#96367C'
-first_poke_c = '#C97F74'
+
 
 def intersession(df, save_path_intersesion):
 
+    # REMOVE LIST BRACKETS
+    df['response_x'] = df['response_x'].apply(lambda x: x.replace('[', '').replace(']', ''))
+    df["response_x"] = pd.to_numeric(df.response_x, errors='coerce')
+
     # RELEVANT COLUMNS
-    df['trial_result'] = 0
-    df.loc[(df.STATE_Correct_first_START > 0, 'trial_result')] = 1
-    df['lick_latency'] = df.STATE_Wait_for_reward_END - df.STATE_Wait_for_reward_START
+    df['trial_result'] = 'miss'
+    df['colors'] = miss_c
+    df.loc[(df.STATE_Correct_first_START > 0, 'trial_result')] = 'correct'
+    df.loc[(df.STATE_Correct_first_START > 0, 'colors')] = correct_c
+
+    # df['resp_latency'] = df.STATE_Response_window_END - df.STATE_Response_window_START
+    # df['lick_time'] = df.STATE_Correct_first_reward_START.fillna(0) + df.STATE_Miss_reward_START.fillna(0)
+    # df['lick_latency'] = df.lick_time - df.STATE_Response_window_END
 
     # RELEVANT VARIABLES
-
-
     with PdfPages(save_path_intersesion) as pdf:
 
         plt.figure(figsize=(8.3, 11.7))  # A4 vertical
@@ -31,15 +37,14 @@ def intersession(df, save_path_intersesion):
         # NUMBER OF TRIALS
         axes = plt.subplot2grid((50, 50), (0, 0), rowspan=6, colspan=50)
 
-
-        ### number of trials
+        ### number of totol trials
         total_trials_s = df.groupby(['session'], sort=False)['trial'].max()
-        sns.scatterplot(total_trials_s.index, total_trials_s, color=miss_c,  s=30, ax=axes, label='All')
+        # sns.scatterplot(total_trials_s.index, total_trials_s, color=miss_c,  hue= , palette= , s=30, ax=axes, label='All')
         sns.lineplot(total_trials_s.index, total_trials_s, color=miss_c, ax= axes)
         ### number of valid trials
         valid_trials_s = df.groupby(['session'], sort=False)['trial_result'].sum()
-        sns.scatterplot(valid_trials_s.index, valid_trials_s, color=all_poke_c, s=30, ax=axes, label='Valids')
-        sns.lineplot(valid_trials_s.index, valid_trials_s, color=all_poke_c, ax=axes)
+        sns.scatterplot(valid_trials_s.index, valid_trials_s, color=correct_c, s=30, ax=axes, label='Valids')
+        sns.lineplot(valid_trials_s.index, valid_trials_s, color=correct_c, ax=axes)
 
         axes.set_ylabel('Number of trials')
         axes.legend()
