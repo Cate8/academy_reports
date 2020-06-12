@@ -5,11 +5,11 @@ import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 
 # PLOT COLORS
-correct_c = 'green'
+correct_first_c = 'green'
 miss_c = 'black'
 water_c = 'teal'
 lines_c = 'gray'
-all_poke_c = '#5B1132'
+wmdl_c = '#a55194'
 
 # BINNING
 """
@@ -19,7 +19,7 @@ x_positions: 35-1405 pix --> 9.8-393.4mm
 """
 l_edge = 9.8
 r_edge = 393.4
-bins = np.linspace(l_edge, r_edge, 6)
+bins_resp = np.linspace(l_edge, r_edge, 6)
 
 
 def touchteaching_daily (df, save_path, date):
@@ -32,7 +32,7 @@ def touchteaching_daily (df, save_path, date):
     df['trial_result'] = 'miss'
     df['colors'] = miss_c
     df.loc[(df.STATE_Correct_first_START > 0, 'trial_result')] = 'correct'
-    df.loc[(df.STATE_Correct_first_START > 0, 'colors')] = correct_c
+    df.loc[(df.STATE_Correct_first_START > 0, 'colors')] = correct_first_c
     df['resp_latency'] = df.STATE_Response_window_END - df.STATE_Response_window_START
 
     if set(['STATE_Miss_reward_START']).issubset(df.columns):
@@ -91,8 +91,8 @@ def touchteaching_daily (df, save_path, date):
 
         # Response latency plot
         axes = plt.subplot2grid((50, 50), (10, 0), rowspan=8, colspan=50)
-        sns.scatterplot(x=df.trial, y=df.resp_latency, color=all_poke_c, s=30, ax=axes)
-        sns.lineplot(x=df.trial, y=df.resp_latency, color=all_poke_c, ax=axes)
+        sns.scatterplot(x=df.trial, y=df.resp_latency, color=wmdl_c, s=30, ax=axes)
+        sns.lineplot(x=df.trial, y=df.resp_latency, color=wmdl_c, ax=axes)
         axes.hlines(y=5, xmin=0, xmax=total_trials, color=lines_c, linestyle=':')
         axes.set_ylabel('Response latency (sec)')
         axes.set_ylim(0, 60)
@@ -119,9 +119,7 @@ def touchteaching_daily (df, save_path, date):
 
         # Hist responses
         axes = plt.subplot2grid((50, 50), (30, 0), rowspan=12, colspan=25)
-        sns.distplot(df.response_x, kde=False, bins=bins, color=all_poke_c, ax=axes, hist_kws={'alpha':0.9})
-
-
+        sns.distplot(df.response_x, kde=False, bins=bins_resp, color=wmdl_c, ax=axes, hist_kws={'alpha':0.9})
         axes.set_xlabel('$Responses\ (r_{t})\ (mm)%$')
         axes.set_ylabel('Nº of touches')
         sns.despine()

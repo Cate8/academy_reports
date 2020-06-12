@@ -19,33 +19,6 @@ def convert_strings_to_lists(df, columns):
 
     def tolist(stringvalue):
         if isinstance(stringvalue, str):
-            stringvalue = stringvalue.replace('[', '')
-            stringvalue = stringvalue.replace(']', '')
-            try:
-                stringvalue = stringvalue.split(sep=',')
-                try:
-                    val = np.array(stringvalue, dtype=float)
-                except:
-                    val = np.array(stringvalue)
-            except:  # is empty string we need [np.nan]
-                val = np.array([np.nan])
-        else:
-            val = np.array([stringvalue])
-        return val
-
-    for column in columns:
-        df[column] = df[column].apply(tolist)
-    return df
-
-# CONVERT STRING COLUMNS OF DF TO LISTS
-def convert_strings_to_lists(df, columns):
-    """
-    If the csv contains a column that is ',' separated, that column is read as a string.
-    We want to convert that string to a list of values. We try to make the list float or string.
-    """
-
-    def tolist(stringvalue):
-        if isinstance(stringvalue, str):
             try:
                 stringvalue = stringvalue.split(sep=',')
                 try:
@@ -100,5 +73,19 @@ def relative_weights(subject, weight):
             basal_weight_subj = float(value)
             relative_weight_subj = weight / basal_weight_subj * 100
             return relative_weight_subj
+
+
+# COMPUTE WINDOW AVERAGE
+def compute_window(data, runningwindow):
+    """
+    Computes a rolling average with a length of runningwindow samples.
+    """
+    performance = []
+    for i in range(len(data)):
+        if i < runningwindow:
+            performance.append(round(np.mean(data[0:i + 1]), 2))
+        else:
+            performance.append(round(np.mean(data[i - runningwindow:i]), 2))
+    return performance
 
 
