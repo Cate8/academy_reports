@@ -25,7 +25,7 @@ bins_resp = np.linspace(l_edge, r_edge, 6)
 def touchteaching_daily (df, save_path, date):
 
     # REMOVE LIST BRACKETS
-    df['response_x'] = df['response_x'].apply(lambda x: x.replace('[', '').replace(']', ''))
+    # df['response_x'] = df['response_x'].apply(lambda x: x.replace('[', '').replace(']', ''))
     df["response_x"] = pd.to_numeric(df.response_x, errors='coerce')
 
     # RELEVANT COLUMNS

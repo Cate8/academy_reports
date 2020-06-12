@@ -2,6 +2,8 @@ import os
 import numpy as np
 import pandas as pd
 
+
+# GET LIST OF PATHS SORTED BY NAME
 def path_generator(path, pattern):
     paths = []
     for root, _, file in os.walk(path):
@@ -9,6 +11,8 @@ def path_generator(path, pattern):
             if f.endswith(pattern):
                 paths.append(os.path.join(root, f))
     return sorted(paths)
+
+
 
 # CONVERT STRING COLUMNS OF DF TO LISTS
 def convert_strings_to_lists(df, columns):
@@ -34,6 +38,8 @@ def convert_strings_to_lists(df, columns):
     for column in columns:
         df[column] = df[column].apply(tolist)
     return df
+
+
 
 # UNNESTING LISTS IN COLUMNS DATAFRAMES
 def unnesting(df, explode):
@@ -64,6 +70,7 @@ def unnesting(df, explode):
     return finaldf
 
 
+
 # BASAL WEIGHTS
 def relative_weights(subject, weight):
     basal_weights = {'A5': '32.68', 'A6': '31.46', 'A7': '30.40', 'A8': '31.38', 'A9': '31.65', 'A10': '27.71',
@@ -73,6 +80,7 @@ def relative_weights(subject, weight):
             basal_weight_subj = float(value)
             relative_weight_subj = weight / basal_weight_subj * 100
             return relative_weight_subj
+
 
 
 # COMPUTE WINDOW AVERAGE

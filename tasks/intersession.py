@@ -16,7 +16,7 @@ all_poke_c = '#5B1132'
 def intersession(df, save_path_intersesion):
 
     # REMOVE LIST BRACKETS
-    df['response_x'] = df['response_x'].apply(lambda x: x.replace('[', '').replace(']', ''))
+    # df['response_x'] = df['response_x'].apply(lambda x: x.replace('[', '').replace(']', ''))
     df["response_x"] = pd.to_numeric(df.response_x, errors='coerce')
 
     # RELEVANT COLUMNS
