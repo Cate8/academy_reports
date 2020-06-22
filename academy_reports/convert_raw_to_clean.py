@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 import settings
+import sys
 
 
 
@@ -89,38 +90,52 @@ def transform(df):
 
 
 # main loop
-paths = path_generator_date(settings.data_directory, 'raw.csv')
+
+def main(arg):
+
+    print(arg)
+
+    paths = path_generator_date(settings.data_directory, 'raw.csv')
 
 
-for directory, filenames in paths.items():
+    for directory, filenames in paths.items():
 
-    print('parsing directory', directory)
+        print('parsing directory', directory)
 
-    global_filename = os.path.basename(os.path.normpath(directory)) + '.csv'
-    global_path = os.path.join(directory, global_filename)
+        global_filename = os.path.basename(os.path.normpath(directory)) + '.csv'
+        global_path = os.path.join(directory, global_filename)
 
-    df_all = None
+        df_all = None
 
-    for filename in filenames:
+        for filename in filenames:
 
-        clean_filename = filename[0][:-8] + '.csv'
-        raw_path = os.path.join(directory, filename[0])
-        clean_path = os.path.join(directory, clean_filename)
+            clean_filename = filename[0][:-8] + '.csv'
+            raw_path = os.path.join(directory, filename[0])
+            clean_path = os.path.join(directory, clean_filename)
 
-        raw_df = pd.read_csv(raw_path, sep=';')
+            raw_df = pd.read_csv(raw_path, sep=';')
 
-        if raw_df['TRIAL'].iloc[-1] > 1:
+            if raw_df['TRIAL'].iloc[-1] > 1:
 
-            clean_df = transform(raw_df)
-            clean_df.to_csv(clean_path, sep=';', header=True, index=False)
+                if arg == ['all']:
+                    clean_df = transform(raw_df)
+                    clean_df.to_csv(clean_path, sep=';', header=True, index=False)
+                else:
+                    clean_df = pd.read_csv(clean_path, sep=';')
 
-            if df_all is None:
-                clean_df.insert(loc=0, column='session', value=1)
-                df_all = clean_df
+                if df_all is None:
+                    clean_df.insert(loc=0, column='session', value=1)
+                    df_all = clean_df
+                else:
+                    clean_df['session'] = [(int(df_all['session'].iloc[-1]) + 1)] * clean_df.shape[0]
+                    df_all = pd.concat([df_all, clean_df], sort=True)
             else:
-                clean_df['session'] = [(int(df_all['session'].iloc[-1]) + 1)] * clean_df.shape[0]
-                df_all = pd.concat([df_all, clean_df], sort=True)
-        else:
-            pass
+                pass
 
-    df_all.to_csv(global_path, header=True, index=False, sep=';')
+        df_all.to_csv(global_path, header=True, index=False, sep=';')
+
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
+
