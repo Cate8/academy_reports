@@ -13,7 +13,6 @@ def path_generator(path, pattern):
     return sorted(paths)
 
 
-
 # CONVERT STRING COLUMNS OF DF TO LISTS
 def convert_strings_to_lists(df, columns):
     """
@@ -29,16 +28,17 @@ def convert_strings_to_lists(df, columns):
                     val = np.array(stringvalue, dtype=float)
                 except:
                     val = np.array(stringvalue)
-            except:  # is empty string we need [np.nan]
-                val = np.array([np.nan])
+            except:
+                val = np.array([])
+        elif np.isnan(stringvalue):
+            return np.array([])
         else:
             val = np.array([stringvalue])
-        return val
+        return val.tolist()
 
     for column in columns:
         df[column] = df[column].apply(tolist)
     return df
-
 
 
 # UNNESTING LISTS IN COLUMNS DATAFRAMES
@@ -69,8 +69,6 @@ def unnesting(df, explode):
             pass
     return finaldf
 
-
-
 # BASAL WEIGHTS
 def relative_weights(subject, weight):
     basal_weights = {'A5': '32.68', 'A6': '31.46', 'A7': '30.40', 'A8': '31.38', 'A9': '31.65', 'A10': '27.71',
@@ -80,8 +78,6 @@ def relative_weights(subject, weight):
             basal_weight_subj = float(value)
             relative_weight_subj = weight / basal_weight_subj * 100
             return relative_weight_subj
-
-
 
 # COMPUTE WINDOW AVERAGE
 def compute_window(data, runningwindow):
@@ -95,5 +91,38 @@ def compute_window(data, runningwindow):
         else:
             performance.append(round(np.mean(data[i - runningwindow:i]), 2))
     return performance
+
+# COLLECT ALL REPONSES TIMES IN A COLUMN
+def create_responses_time(row):
+    try:
+        result = row['STATE_Incorrect_START'].tolist().copy()
+    except (TypeError, AttributeError):
+        result = row['STATE_Incorrect_START'].copy()
+
+    items = [row['STATE_Correct_first_START'], row['STATE_Correct_other_START'], row['STATE_Punish_START']]
+
+    for item in items:
+        if not np.isnan(item):
+            result += [item]
+
+    return result
+
+# RESPONSE RESULT COLUMN
+def create_reponse_result(row):
+    result = ['incorrect'] * len(row['STATE_Incorrect_START'])
+    if row['trial_result'] != 'miss' and row['trial_result'] != 'incorrect':
+        result += [row['trial_result']]
+    return result
+
+# CREATE CSVS
+def create_csv(df, path):
+    # df = convert_lists_to_strings(df)?
+    df.to_csv(path, sep=';', na_rep='nan', index=False)
+
+# CHANCE CALCULATION
+def chance_calculation(correct_th):
+    screen_size = 1440 * 0.28
+    chance = 1 / (screen_size / correct_th)
+    return chance
 
 
