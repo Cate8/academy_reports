@@ -7,7 +7,6 @@ from academy_reports import utils
 from matplotlib.lines import Line2D
 
 
-
 # PLOT COLORS
 correct_first_c = 'green'
 correct_other_c = 'limegreen'
@@ -44,28 +43,35 @@ bins_err = np.linspace(-r_edge, r_edge, 12)
 
 def stagetraining_daily (df, save_path, date):
 
-    # RELEVANT COLUMNS
-    ###fix incorrects
+    # FIX INCORRECTS
     df.loc[((df.trial_result == 'miss') & (df['response_x'].notna()), 'trial_result')] = 'incorrect'
 
-    ###trial type
-    delays = df.delay.unique()
-    if df.pwm_ds.iloc[0] > 0:
-        df.loc[((df.trial_type == 'WM_D') & (df.delay == delays[0])), 'trial_type'] = 'WM_Ds'
+    # FIX DELAY TYPE IN THE FIRST SESSIONS
+    if df.date.iloc[0] <= '2020/06/28':
+        df['delay_type'] = np.nan
+        df.loc[((df.trial_type == 'WM_D') & (df.delay == 0)), 'delay_type'] = 'DS'
+        df.loc[((df.trial_type == 'WM_D') & (df.delay == 0.5)), 'delay_type'] = 'DM'
+        df.loc[((df.trial_type == 'WM_D') & (df.delay == 1)), 'delay_type'] = 'DL'
 
-    if df.pwm_dm.iloc[0] > 0 and len(delays) > 1:
-        df.loc[((df.trial_type == 'WM_D') & (df.delay == delays[1])), 'trial_type'] = 'WM_Dm'
+    ttypes = df.trial_type.unique().tolist()
 
-    if df.pwm_dl.iloc[0] > 0 and len(delays) > 2:
-        df.loc[((df.trial_type == 'WM_D') & (df.delay == delays[2])), 'trial_type'] = 'WM_Dl'
+    # FIX TTYPES
+    if (df['pwm_ds'] > 0).any():
+        df.loc[((df.trial_type == 'WM_D') & (df.delay_type == 'DS')), 'trial_type'] = 'WM_Ds'
+    if (df['pwm_dm'] > 0).any():
+        df.loc[((df.trial_type == 'WM_D') & (df.delay_type == 'DM')), 'trial_type'] = 'WM_Dm'
+    if (df['pwm_dl'] > 0).any():
+        df.loc[((df.trial_type == 'WM_D') & (df.delay_type == 'DL')), 'trial_type'] = 'WM_Dl'
 
+    # FIX DELAYS
     df.loc[(df.trial_type == 'VG'), 'delay'] = -1  # VG trials
     df.loc[(df.trial_type == 'WM_I'), 'delay'] = -0.5  # WMI trials
 
     ttypes = df.trial_type.unique().tolist()
+    # dtypes = df.delay_type.unique().tolist()
     treslt = df.trial_result.unique().tolist()
 
-    #correct the order of the list
+    #correct the order of the lists
     if 'WM_Ds' in ttypes:
         idx = ttypes.index('WM_Ds')
         ttypes.pop(idx)
@@ -75,6 +81,7 @@ def stagetraining_daily (df, save_path, date):
             ttypes.pop(idx)
             ttypes.insert(1, "WM_I")
 
+    # RELEVANT COLUMNS
     ###colors to plot columns
     df['ttype_colors'] = vg_c
     df.loc[(df.trial_type == 'WM_I', 'ttype_colors')] = wmi_c
@@ -385,7 +392,7 @@ def stagetraining_daily (df, save_path, date):
         plt.figure(figsize=(11.7, 11.7))  # Apaisat
 
         # ACCURACY TRIAL INDEX & TRIAL TYPE
-        axes = plt.subplot2grid((50, 50), (0, 0), rowspan=10, colspan=50)
+        axes = plt.subplot2grid((50, 50), (0, 0), rowspan=8, colspan=50)
 
         ttype_palette = sns.set_palette(ttype_colors, n_colors=len(ttype_colors))
         for ttype, ttype_df in first_resp_df.groupby('trial_type'):
@@ -398,7 +405,7 @@ def stagetraining_daily (df, save_path, date):
         axes.fill_between(df.trial, vg_chance_p, 0, facecolor=lines_c, alpha=0.3)
         axes.fill_between(df.trial, wm_chance_p, 0, facecolor=lines2_c, alpha=0.4)
 
-        axes.set_xlabel('Trials', label_kwargs)
+        axes.set_xlabel('')
         axes.set_ylabel('Accuracy (%)', label_kwargs)
         axes.set_xlim([1, total_trials + 1])
         axes.set_ylim(0, 1.1)
@@ -410,10 +417,34 @@ def stagetraining_daily (df, save_path, date):
         lines = [Line2D([0], [0], color=c, marker='o', markersize=7, markerfacecolor=c) for c in colors]
         axes.legend(lines, labels, fontsize=8, title="Trial type", bbox_to_anchor=(1, 0.9), loc='center')
 
+        # TRIAL TYPE PROBABILITY PROGRESSIONS
+        axes = plt.subplot2grid((50, 50), (9, 0), rowspan=4, colspan=50)
+
+        check = df[df['task'].str.contains("StageTraining_2B_V4")]
+        if check.shape[0] > 0:
+            probs_list = [df.pvg, df.pwm_i, df.pwm_ds, df.pwm_dm, df.pwm_dl]
+            df['pwm_d'] = df.pwm_ds + df.pwm_dm + df.pwm_dl
+        else:
+            probs_list = [df.pvg, df.pwm_i, df.pwm_ds * df.pwm_d, df.pwm_dm * df.pwm_d, df.pwm_dl * df.pwm_d]
+
+        probs_labels = ['VG', 'WM_I', 'WM_Ds', 'WM_Dm', 'WM_Dl']
+        probs_colors = [vg_c, wmi_c, wmds_c, wmdm_c, wmdl_c]
+
+        sns.lineplot(x=df.trial, y=df.pwm_d, ax=axes, color=lines_c, label='All WM_D').lines[0].set_linestyle("--")
+        for idx, prob in enumerate(probs_list):
+            sns.lineplot(x=df.trial, y=prob, ax=axes, color=probs_colors[idx])
+            sns.scatterplot(x=df.trial, y=prob, ax=axes, color=probs_colors[idx], label=probs_labels[idx], s=15)
+
+        axes.set_xlabel('Trials', label_kwargs)
+        axes.set_ylabel('Prob \n appearance', label_kwargs)
+        axes.set_ylim(-0.1, 1.1)
+        axes.set_xlim([1, total_trials + 1])
+        axes.get_legend().remove()
+
 
         # ACCURACY STIMULUS POSITION & TRIAL TYPE
         #first poke
-        axes = plt.subplot2grid((50, 50), (14, 0), rowspan=12, colspan=14)
+        axes = plt.subplot2grid((50, 50), (17, 0), rowspan=9, colspan=14)
 
         first_resp_df['xt_bins'] = pd.cut(first_resp_df.x, bins=bins_resp, labels=False, include_lowest=True)
         x_ax_ticks = list(np.linspace(-0.5, 4.5, 5))
@@ -434,7 +465,7 @@ def stagetraining_daily (df, save_path, date):
         axes.get_legend().remove()
 
         #last poke
-        axes = plt.subplot2grid((50, 50), (14, 15), rowspan=12, colspan=14)
+        axes = plt.subplot2grid((50, 50), (17, 15), rowspan=9, colspan=14)
         last_resp_df['xt_bins'] = pd.cut(last_resp_df.x, bins=bins_resp, labels=False, include_lowest=True)
 
         sns.pointplot(x='xt_bins', y="correct_bool", data=last_resp_df, hue='trial_type', s=3)
@@ -453,7 +484,7 @@ def stagetraining_daily (df, save_path, date):
         axes.get_legend().remove()
 
         # ERROR VS STIMULUS POSITION
-        axes = plt.subplot2grid((50, 50), (14, 33), rowspan=12, colspan=17)
+        axes = plt.subplot2grid((50, 50), (17, 33), rowspan=9, colspan=17)
 
         sns.pointplot(x='xt_bins', y="error_x", data=first_resp_df, hue='trial_type', s=3, ax=axes)
         axes.hlines(y=0, xmin=min(x_ax_ticks), xmax=max(x_ax_ticks), color=lines_c, linestyle=':')
@@ -473,8 +504,8 @@ def stagetraining_daily (df, save_path, date):
         for axes_idx, ttype in enumerate(ttypes):
             subset = first_resp_df.loc[first_resp_df['trial_type'] == ttype]
             axes = plt.subplot2grid((50, 50), (32, axes_loc[axes_idx]), rowspan=7, colspan=9)
-            color = subset.ttype_colors.unique()
             axes.set_title(ttype, fontsize=11, fontweight='bold')
+            color = subset.ttype_colors.unique()
 
             sns.distplot(subset.response_x, kde=False, bins=bins_resp, color=color, ax=axes,
                          hist_kws={'alpha': 0.9})
@@ -510,6 +541,9 @@ def stagetraining_daily (df, save_path, date):
         # SAVING AND CLOSING PAGE
         pdf.savefig()
         plt.close()
+
+        print('New daily report completed successfully')
+
 
 
         ############################################# OLD USEFUL PLOTS #############################################

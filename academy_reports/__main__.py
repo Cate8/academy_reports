@@ -46,14 +46,17 @@ def main():
             file_name = subject + '_' + task + '-' + str(stage) + '_' + date + '.pdf'
             save_path = os.path.join(save_directory, file_name)
 
-            if task == 'LickTeaching':
-                lickteaching_daily(session.copy(), save_path, date)
-            elif task == 'TouchTeaching':
-                touchteaching_daily(session.copy(), save_path, date)
-            elif task[0:13] == 'StageTraining':
-                stagetraining_daily(session.copy(), save_path, date)
+            if not os.path.exists(save_path): #ONLY DONE IF NOT EXISTS
+                if task == 'LickTeaching':
+                    lickteaching_daily(session.copy(), save_path, date)
+                elif task == 'TouchTeaching':
+                    touchteaching_daily(session.copy(), save_path, date)
+                elif task[0:13] == 'StageTraining':
+                    stagetraining_daily(session.copy(), save_path, date)
+                else:
+                    print('Task not found for file:', path, 'task:', task)
             else:
-                print('Task not found for file:', path, 'task:', task)
+                print('Already done!')
 
     # GLOBAL DF
     global_df = pd.concat(dfs)
