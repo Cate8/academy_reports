@@ -30,9 +30,13 @@ def main():
             os.makedirs(save_directory)
 
         # INTERSESSIONS
-        file_name_intersesion = subject + '_intersession.pdf'
-        save_path_intersesion = os.path.join(save_directory, file_name_intersesion)
-        intersession(df.copy(), save_path_intersesion)
+        try:
+            file_name_intersesion = subject + '_intersession.pdf'
+            save_path_intersesion = os.path.join(save_directory, file_name_intersesion)
+            intersession(df.copy(), save_path_intersesion)
+        except:
+            print('Error performing the intersession')
+            pass
 
         # DAILY REPORTS
         for sess, session in df.groupby('session'):

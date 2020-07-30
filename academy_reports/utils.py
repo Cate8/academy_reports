@@ -72,7 +72,7 @@ def unnesting(df, explode):
 # BASAL WEIGHTS
 def relative_weights(subject, weight):
     basal_weights = {'A5': '32.68', 'A6': '31.46', 'A7': '30.40', 'A8': '31.38', 'A9': '31.65', 'A10': '27.71',
-                         'A11': '31.20', 'A12': '27.72', 'MA1': '31.2', 'MA2': '37.5', 'MA4': '39.6'}
+                         'A11': '31.20', 'A12': '27.72', 'MA1': '25.33', 'MA2': '21.97', 'MA3': '24.93', 'MA4': '23.31', 'MA5': '25.28'}
     for key, value in basal_weights.items():
         if subject == key:
             basal_weight_subj = float(value)
@@ -116,7 +116,6 @@ def create_reponse_result(row):
 
 # CREATE CSVS
 def create_csv(df, path):
-    # df = convert_lists_to_strings(df)?
     df.to_csv(path, sep=';', na_rep='nan', index=False)
 
 # CHANCE CALCULATION
@@ -124,5 +123,16 @@ def chance_calculation(correct_th):
     screen_size = 1440 * 0.28
     chance = 1 / (screen_size / correct_th)
     return chance
+
+# PECRCENTAGE AXES
+def axes_pcent(axes, label_kwargs):
+    """
+    convert y axis form 0-1 to 0-100%
+    """
+    # convert y axis form 0-1 to 0-100%
+    axes.set_ylabel('Accuracy (%)', label_kwargs)
+    axes.set_ylim(0, 1.1)
+    axes.set_yticks(np.arange(0, 1.1, 0.1))
+    axes.set_yticklabels(['0', '', '', '', '', '50', '', '', '', '', '100'])
 
 
