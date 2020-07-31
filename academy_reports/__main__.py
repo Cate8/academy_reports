@@ -18,49 +18,52 @@ def main():
 
     dfs = []
     for path in raw_paths:
-        df = pd.read_csv(path, sep=';')
-        dfs.append(df)
 
+        #sort, only analyze general csvs
         subject = os.path.basename(path)
-        subject, ext = os.path.splitext(subject)
-        print('Starting report '+str(subject))
+        if len(subject) < 8:
+            df = pd.read_csv(path, sep=';')
+            dfs.append(df)
 
-        save_directory = os.path.join(settings.save_directory, subject)
-        if not os.path.exists(save_directory):
-            os.makedirs(save_directory)
+            subject, ext = os.path.splitext(subject)
+            print('Starting report '+str(subject))
 
-        # INTERSESSIONS
-        try:
-            file_name_intersesion = subject + '_intersession.pdf'
-            save_path_intersesion = os.path.join(save_directory, file_name_intersesion)
-            intersession(df.copy(), save_path_intersesion)
-        except:
-            print('Error performing the intersession')
-            pass
+            save_directory = os.path.join(settings.save_directory, subject)
+            if not os.path.exists(save_directory):
+                os.makedirs(save_directory)
 
-        # DAILY REPORTS
-        for sess, session in df.groupby('session'):
-            subject = session.subject.iloc[0]
-            task = session.task.iloc[0]
-            print(task[0:13])
-            print(sess)
-            stage = session.stage.iloc[0]
-            date = datetime.fromtimestamp(session.STATE_Start_task_START.iloc[0]).strftime("%Y%m%d-%H%M%S")
+            # INTERSESSIONS
+            try:
+                file_name_intersesion = subject + '_intersession.pdf'
+                save_path_intersesion = os.path.join(save_directory, file_name_intersesion)
+                intersession(df.copy(), save_path_intersesion)
+            except:
+                print('Error performing the intersession')
+                pass
 
-            file_name = subject + '_' + task + '-' + str(stage) + '_' + date + '.pdf'
-            save_path = os.path.join(save_directory, file_name)
+            # DAILY REPORTS
+            for sess, session in df.groupby('session'):
+                subject = session.subject.iloc[0]
+                task = session.task.iloc[0]
+                print(task[0:13])
+                print(sess)
+                stage = session.stage.iloc[0]
+                date = datetime.fromtimestamp(session.STATE_Start_task_START.iloc[0]).strftime("%Y%m%d-%H%M%S")
 
-            if not os.path.exists(save_path): #ONLY DONE IF NOT EXISTS
-                if task == 'LickTeaching':
-                    lickteaching_daily(session.copy(), save_path, date)
-                elif task == 'TouchTeaching':
-                    touchteaching_daily(session.copy(), save_path, date)
-                elif task[0:13] == 'StageTraining':
-                    stagetraining_daily(session.copy(), save_path, date)
+                file_name = subject + '_' + task + '-' + str(stage) + '_' + date + '.pdf'
+                save_path = os.path.join(save_directory, file_name)
+
+                if not os.path.exists(save_path): #ONLY DONE IF NOT EXISTS
+                    if task == 'LickTeaching':
+                        lickteaching_daily(session.copy(), save_path, date)
+                    elif task == 'TouchTeaching':
+                        touchteaching_daily(session.copy(), save_path, date)
+                    elif task[0:13] == 'StageTraining':
+                        stagetraining_daily(session.copy(), save_path, date)
+                    else:
+                        print('Task not found for file:', path, 'task:', task)
                 else:
-                    print('Task not found for file:', path, 'task:', task)
-            else:
-                print('Already done!')
+                    print('Already done!')
 
     # GLOBAL DF
     global_df = pd.concat(dfs)

@@ -25,7 +25,7 @@ wmds_c = '#9c9ede'
 wmdm_c = '#ce6dbd'
 wmdl_c = '#a55194'
 
-stim_c = 'orange'
+stim_c = 'gold'
 correct_th_c = 'green'
 repoke_th_c = 'orangered'
 
@@ -258,18 +258,19 @@ def stagetraining_daily (df, save_path, date):
                       color=correct_first_c, order=ttypes, estimator=np.std)
         sns.pointplot(x=last_resp_df.trial_type, y=last_resp_df.error_x, s=20, ax=axes,
                       color=correct_other_c, order=ttypes, estimator=np.std)
-        axes.hlines(y=[40], xmin=0, xmax=len(ttypes) - 1, color=stim_c, linestyle=':') #chance
-        axes.fill_between(ttypes, 160, 155, facecolor=lines_c, alpha=0.3)
+        axes.hlines(y=[stim_width], xmin=0, xmax=len(ttypes) - 1, color=stim_c, linestyle=':')
+        axes.fill_between(ttypes, stim_width, 0, facecolor=stim_c, alpha=0.2)  # chance
+        axes.fill_between(ttypes, 160, 155, facecolor=lines_c, alpha=0.3) #chance
 
         axes.set_xlabel('')
         axes.set_ylabel('STD (mm)', label_kwargs)
 
 
         # RESPONSE LATENCIES   # we look to all the reponses time
-        axes = plt.subplot2grid((50, 50), (33, 0), rowspan=15, colspan=22)
+        axes = plt.subplot2grid((50, 50), (31, 0), rowspan=17, colspan=22)
         ttype_palette = sns.set_palette(ttype_colors, n_colors=len(ttype_colors))
 
-        y_max = 10
+        y_max = 12
         order = sorted(treslt)
         sns.boxplot(x='response_result', y='resp_latency', hue='trial_type', data=resp_df, color='white',
                         showfliers=False, ax=axes, order=order)
@@ -282,7 +283,7 @@ def stagetraining_daily (df, save_path, date):
         axes.get_legend().remove()
 
         # LICKPORT LATENCIES   # we look only the trial time
-        axes = plt.subplot2grid((50, 50), (33, 27), rowspan=15, colspan=23)
+        axes = plt.subplot2grid((50, 50), (31, 27), rowspan=17, colspan=23)
 
         sns.boxplot(x='trial_result', y='lick_latency', hue='trial_type', data=df, color='white', showfliers=False,
                         ax=axes, order=order)
@@ -359,6 +360,7 @@ def stagetraining_daily (df, save_path, date):
         sns.scatterplot(x=resp_df.error_x, y=resp_df.trial, hue=resp_df.response_result, style=resp_df.trial_type,
                         s=20, ax=axes, zorder=20)
         axes.barh(list(df.trial), width=800, color=lines2_c, left=-400, height=0.7, alpha=0.4, zorder=0)
+        axes.axvspan(-stim_width/2, stim_width/2, color=stim_c,  alpha=0.1)
 
         #vertical lines
         neg_lines_list = [-x for x in lines_list]
@@ -368,6 +370,7 @@ def stagetraining_daily (df, save_path, date):
 
         for idx, line in enumerate(all_lines_error):
             axes.axvline(x=line, color=all_colors[idx], linestyle=':', linewidth=1)
+        axes.axvspan(-stim_width/2, stim_width/2, color=stim_c,  alpha=0.1)
 
         axes.set_xlabel('')
         axes.set_ylabel('')
@@ -387,6 +390,7 @@ def stagetraining_daily (df, save_path, date):
         #vertical lines
         for idx, line in enumerate(all_lines_error):
             axes.axvline(x=line, color=all_colors[idx], linestyle=':', linewidth=1)
+        axes.axvspan(-stim_width / 2, stim_width / 2, color=stim_c, alpha=0.1)
 
         axes.set_xlabel('$Errors\ (r_{t}-x_{t})\ (mm)%$', label_kwargs)
         axes.set_ylabel('')
@@ -394,13 +398,21 @@ def stagetraining_daily (df, save_path, date):
         axes.set_xlim(x_min, x_max)
         sns.despine()
 
+        # lines legend
+        labels = ['Stimulus', 'Correct threshold', 'Repoke threshold']
+        colors = [stim_c, correct_th_c, repoke_th_c]
+        lines = [Line2D([0], [0], linestyle='dotted', color=colors[i], marker=',', markersize=6,
+                        markerfacecolor=colors[i]) for i in range(len(colors))]
+        axes.legend(lines, labels, fontsize=8, loc='center', bbox_to_anchor=(1, 6.25))
+
+
         # SAVING AND CLOSING PAGE
         pdf.savefig()
         plt.close()
 
 
         # PAGE 3
-        plt.figure(figsize=(11.7, 11.7))  # Apaisat
+        plt.figure(figsize=(11.7, 11.7))
 
         # ACCURACY TRIAL INDEX & TRIAL TYPE
         axes = plt.subplot2grid((50, 50), (0, 0), rowspan=8, colspan=50)
@@ -438,12 +450,13 @@ def stagetraining_daily (df, save_path, date):
                     ttype_df['stim_respwin'] = ttype_df['stim_duration'] - ttype_df['fixation_time']
                     sns.lineplot(x=ttype_df.trial, y=ttype_df.stim_respwin, style=ttype_df.trial_type, markers=True,
                                  ax=axes, color=ttype_color)
+                    axes.hlines(y=[0.2, 0.4], xmin=min(ttype_df.trial), xmax=max(ttype_df.trial), color=lines_c, linestyle=':')
                     axes.set_ylim([0, ttype_df.stim_respwin.max()+0.2])
+                    axes.get_legend().remove()
             axes.set_ylabel('Stim duration \n (sec)', label_kwargs)
             axes.set_xlabel('Trials', label_kwargs)
             axes.set_xlim([1, total_trials + 1])
             axes.set_ylim()
-            axes.get_legend().remove()
 
         # PROBS PLOT
         else:
@@ -470,15 +483,15 @@ def stagetraining_daily (df, save_path, date):
 
         # ACCURACY STIMULUS POSITION & TRIAL TYPE
         #first poke
-        axes = plt.subplot2grid((50, 50), (17, 0), rowspan=9, colspan=14)
+        axes = plt.subplot2grid((50, 50), (18, 0), rowspan=9, colspan=14)
 
         first_resp_df['xt_bins'] = pd.cut(first_resp_df.x, bins=bins_resp, labels=False, include_lowest=True)
         x_ax_ticks = list(np.linspace(-0.5, 4.5, 5))
 
         sns.pointplot(x='xt_bins', y="correct_bool", data=first_resp_df, hue='trial_type', s=3)
         axes.hlines(y=[0.5, 1], xmin=min(x_ax_ticks), xmax=max(x_ax_ticks), color=lines_c, linestyle=':')
-        axes.fill_between(x_ax_ticks, vg_chance_p, 0, facecolor=lines_c, alpha=0.3)
-        axes.fill_between(x_ax_ticks, wm_chance_p, 0, facecolor=lines2_c, alpha=0.4)
+        for idx, i in enumerate(chance_list):
+            axes.fill_between(x_ax_ticks, chance_list[idx], 0, facecolor=lines_c_list[idx], alpha=0.3)
 
         axes.set_xticks(x_ax_ticks)
         axes.set_xticklabels(['0', '100', '200', '300', '400'])
@@ -488,13 +501,13 @@ def stagetraining_daily (df, save_path, date):
         axes.get_legend().remove()
 
         #last poke
-        axes = plt.subplot2grid((50, 50), (17, 15), rowspan=9, colspan=14)
+        axes = plt.subplot2grid((50, 50), (18, 15), rowspan=9, colspan=14)
         last_resp_df['xt_bins'] = pd.cut(last_resp_df.x, bins=bins_resp, labels=False, include_lowest=True)
 
         sns.pointplot(x='xt_bins', y="correct_bool", data=last_resp_df, hue='trial_type', s=3)
         axes.hlines(y=[0.5, 1], xmin=min(x_ax_ticks), xmax=max(x_ax_ticks), color=lines_c, linestyle=':')
-        axes.fill_between(x_ax_ticks, vg_chance_p, 0, facecolor=lines_c, alpha=0.3)
-        axes.fill_between(x_ax_ticks, wm_chance_p, 0, facecolor=lines2_c, alpha=0.4)
+        for idx, i in enumerate(chance_list):
+            axes.fill_between(x_ax_ticks, chance_list[idx], 0, facecolor=lines_c_list[idx], alpha=0.3)
 
         axes.set_xticks(x_ax_ticks)
         axes.set_xticklabels(['0', '100', '200', '300', '400'])
@@ -506,12 +519,12 @@ def stagetraining_daily (df, save_path, date):
         axes.get_legend().remove()
 
         # ERROR VS STIMULUS POSITION
-        axes = plt.subplot2grid((50, 50), (17, 33), rowspan=9, colspan=17)
+        axes = plt.subplot2grid((50, 50), (18, 33), rowspan=9, colspan=17)
 
         sns.pointplot(x='xt_bins', y="error_x", data=first_resp_df, hue='trial_type', s=3, ax=axes)
         axes.hlines(y=[-stim_width/2, stim_width/2], xmin=min(x_ax_ticks), xmax=max(x_ax_ticks), color=stim_c, linestyle=':')
+        axes.fill_between(x_ax_ticks, stim_width/2, -stim_width/2, facecolor=stim_c, alpha=0.1)
 
-        # axes.fill_between(x_ax_ticks, vg_chance_p, 0, facecolor=lines_c, alpha=0.4)
         axes.set_xticks(x_ax_ticks)
         axes.set_xticklabels(['0', '100', '200', '300', '400'])
         axes.set_title('First poke', fontsize=11, fontweight='bold')
