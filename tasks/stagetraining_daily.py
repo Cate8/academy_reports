@@ -563,6 +563,7 @@ def stagetraining_daily (df, save_path, date):
             # vertical lines
             for idx, line in enumerate(all_lines_error):
                 axes.axvline(x=line, color=all_colors[idx], linestyle=':', linewidth=1)
+            axes.axvspan(-stim_width / 2, stim_width / 2, color=stim_c, alpha=0.1)
 
             axes.set_xlabel('$Errors\ (r_{t}-x_{t})\ (mm)%$', label_kwargs)
             axes.set_ylabel('')
