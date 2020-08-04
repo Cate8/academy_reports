@@ -64,6 +64,7 @@ def stagetraining_daily (df, save_path, date):
         df.loc[((df.trial_type == 'WM_D') & (df.delay_type == 'DL')), 'trial_type'] = 'WM_Dl'
 
     # FIX DELAYS
+    df['delay_o'] = df['delay'] #keep original delay values
     df.loc[(df.trial_type == 'VG'), 'delay'] = -1      # VG trials
     df.loc[(df.trial_type == 'WM_I'), 'delay'] = -0.5  # WMI trials
 
@@ -312,21 +313,48 @@ def stagetraining_daily (df, save_path, date):
         for idx, state in enumerate(states_list):
             resp_df[state] = resp_df[state] - resp_df['STATE_Response_window_START']
 
-        rreslt_palette = sns.set_palette(rreslt_colors, n_colors=len(rreslt_colors))
+        # needed for rester plot horizontal bars
+        df['stim_duration_align'] = df['stim_duration'] - df['fixation_time']
+        resp_df['stim_duration_align'] = resp_df['stim_duration'] - resp_df['fixation_time']
+        # cut stim duration in VG when reponse is correct
+        resp_df.loc[
+            ((resp_df.trial_type == 'VG') & (resp_df.response_result == 'correct_first')), 'stim_duration_align'] = \
+            resp_df['responses_time']
+        resp_df.loc[
+            ((resp_df.trial_type == 'VG') & (resp_df.response_result == 'correct_other')), 'stim_duration_align'] = \
+            resp_df['responses_time']
+        resp_df.loc[((resp_df.trial_type == 'VG') & (resp_df.response_result == 'punish')), 'stim_duration_align'] = \
+            resp_df['responses_time']
+
+        h_bars = resp_df.drop_duplicates(subset=['trial', 'session'], keep='last', inplace=False).copy()
+        h_bars['origin'] = h_bars['fixation_time'] + h_bars['delay_o']
+        miss_df = df.loc[df['trial_result'] == 'miss', :]
 
         # RASTER PLOT
         x_min = -3
         x_max = 10
         axes = plt.subplot2grid((50, 50), (0, 0), rowspan=42, colspan=25)
+        rreslt_palette = sns.set_palette(rreslt_colors, n_colors=len(rreslt_colors))
 
         sns.scatterplot(x=resp_df.reward_time, y=resp_df.trial, color=water_c, s=20, ax=axes, label='water')
         sns.scatterplot(x=resp_df.responses_time, y=resp_df.trial, hue=resp_df.response_result,
                         style=resp_df.trial_type, s=20, ax=axes)
-        df['stim_duration_align'] = df['stim_duration'] - df['fixation_time']
+
+        # horizontal lines
         axes.barh(list(df.trial), width=100, color=lines2_c, left=-2, height=0.5, alpha=0.4,
                   zorder=0)  # horizontal bars each trial
-        axes.barh(list(df.trial), width=df.stim_duration_align, color=lines_c, left=0, height=0.7, alpha=0.3,
-                  zorder=0)  # horizontal bars signal stim duration
+        ###misses
+        axes.barh(list(miss_df.trial), width=miss_df.stim_duration_align, color=lines_c, left=0, height=0.7, alpha=0.3,
+                  zorder=0)  # horizontal bars signal stim duration after RW onset
+        # axes.barh(list(miss_df.trial), width=miss_df.fixation_time, color=lines_c, left=-miss_df.fixation_time, height=0.7,
+        #           alpha=0.3, zorder=0)  # horizontal bars signal stim duration before RW onset
+        # add stimulus display time before rw onset in missed trials
+
+        ###responses
+        axes.barh(list(h_bars.trial), width=h_bars.stim_duration_align, color=lines_c, left=0, height=0.7, alpha=0.3,
+                  zorder=0)  # horizontal bars signal stim duration after RW onset
+        axes.barh(list(h_bars.trial), width=h_bars.fixation_time, color=lines_c, left=-h_bars.origin, height=0.7,
+                  alpha=0.3, zorder=0)  # horizontal bars signal stim duration before RW onset
         axes.axvline(x=0, color=lines_c, linewidth=1.5, zorder=10)
 
         axes.set_ylim(-1, total_trials + 1)
@@ -335,7 +363,6 @@ def stagetraining_daily (df, save_path, date):
         axes.set_ylabel('Trials', label_kwargs)
         axes.set_xlim(x_min, x_max)
         axes.get_legend().remove()
-        #add stimulus display time before rw onset
 
         # HISTOGRAM OF LATENCIES
         axes = plt.subplot2grid((50, 50), (43, 0), rowspan=7, colspan=25)
