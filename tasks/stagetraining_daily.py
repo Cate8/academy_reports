@@ -313,8 +313,7 @@ def stagetraining_daily (df, save_path, date):
         for idx, state in enumerate(states_list):
             resp_df[state] = resp_df[state] - resp_df['STATE_Response_window_START']
 
-        # needed for rester plot horizontal bars
-        df['stim_duration_align'] = df['stim_duration'] - df['fixation_time']
+        # horizontal bars needed for raster plot
         resp_df['stim_duration_align'] = resp_df['stim_duration'] - resp_df['fixation_time']
         # cut stim duration in VG when reponse is correct
         resp_df.loc[
@@ -328,7 +327,13 @@ def stagetraining_daily (df, save_path, date):
 
         h_bars = resp_df.drop_duplicates(subset=['trial', 'session'], keep='last', inplace=False).copy()
         h_bars['origin'] = h_bars['fixation_time'] + h_bars['delay_o']
+        origin = h_bars.origin.tolist()
+        origin = [-i for i in origin]
+
+        # misses
         miss_df = df.loc[df['trial_result'] == 'miss', :]
+        origin_m = miss_df.fixation_time.tolist()
+        origin_m = [-i for i in origin_m]
 
         # RASTER PLOT
         x_min = -3
@@ -341,21 +346,18 @@ def stagetraining_daily (df, save_path, date):
                         style=resp_df.trial_type, s=20, ax=axes)
 
         # horizontal lines
-        axes.barh(list(df.trial), width=100, color=lines2_c, left=-2, height=0.5, alpha=0.4,
+        axes.barh(list(df.trial), width=100, color=lines2_c, left=-2, height=0.7, alpha=0.4,
                   zorder=0)  # horizontal bars each trial
-        ###misses
-        axes.barh(list(miss_df.trial), width=miss_df.stim_duration_align, color=lines_c, left=0, height=0.7, alpha=0.3,
-                  zorder=0)  # horizontal bars signal stim duration after RW onset
-        # axes.barh(list(miss_df.trial), width=miss_df.fixation_time, color=lines_c, left=-miss_df.fixation_time, height=0.7,
-        #           alpha=0.3, zorder=0)  # horizontal bars signal stim duration before RW onset
-        # add stimulus display time before rw onset in missed trials
-
-        ###responses
         axes.barh(list(h_bars.trial), width=h_bars.stim_duration_align, color=lines_c, left=0, height=0.7, alpha=0.3,
                   zorder=0)  # horizontal bars signal stim duration after RW onset
-        axes.barh(list(h_bars.trial), width=h_bars.fixation_time, color=lines_c, left=-h_bars.origin, height=0.7,
+        axes.barh(list(h_bars.trial), width=h_bars.fixation_time, color=lines_c, left=origin, height=0.7,
                   alpha=0.3, zorder=0)  # horizontal bars signal stim duration before RW onset
         axes.axvline(x=0, color=lines_c, linewidth=1.5, zorder=10)
+        ### misses
+        # axes.barh(list(miss_df.trial), width=miss_df.stim_duration, color=lines_c, left=-1, height=0.7, alpha=0.3,
+        #           zorder=0)  # horizontal bars signal stim duration after RW onset
+        axes.barh(list(miss_df.trial), width=miss_df.stim_duration, color=lines_c, left=origin_m, height=0.7,
+                  alpha=0.3, zorder=0)  # horizontal bars signal stim duration before RW onset
 
         axes.set_ylim(-1, total_trials + 1)
         axes.set_xlabel('')
