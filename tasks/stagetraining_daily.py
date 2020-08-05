@@ -354,10 +354,10 @@ def stagetraining_daily (df, save_path, date):
                   alpha=0.3, zorder=0)  # horizontal bars signal stim duration before RW onset
         axes.axvline(x=0, color=lines_c, linewidth=1.5, zorder=10)
         ### misses
-        # axes.barh(list(miss_df.trial), width=miss_df.stim_duration, color=lines_c, left=-1, height=0.7, alpha=0.3,
-        #           zorder=0)  # horizontal bars signal stim duration after RW onset
+        axes.barh(list(miss_df.trial), width=miss_df.stim_duration, color=lines_c, left=-1, height=0.7, alpha=0.2,
+                  zorder=0)  # horizontal bars signal stim duration after RW onset
         axes.barh(list(miss_df.trial), width=miss_df.stim_duration, color=lines_c, left=origin_m, height=0.7,
-                  alpha=0.3, zorder=0)  # horizontal bars signal stim duration before RW onset
+                  alpha=0.2, zorder=0)  # horizontal bars signal stim duration before RW onset
 
         axes.set_ylim(-1, total_trials + 1)
         axes.set_xlabel('')
@@ -464,7 +464,7 @@ def stagetraining_daily (df, save_path, date):
         colors = ttype_colors
         labels = df.trial_type.unique()
         lines = [Line2D([0], [0], color=c, marker='o', markersize=7, markerfacecolor=c) for c in colors]
-        axes.legend(lines, labels, fontsize=8, title="Trial type", bbox_to_anchor=(1, 0.9), loc='center')
+        axes.legend(lines, labels, fontsize=8, title="Trial type", bbox_to_anchor=(1.05, 0.9), loc='center')
 
         # TRIAL TYPE PROBABILITY PROGRESSIONS // STIMULUS LENGHT PLOT
         axes = plt.subplot2grid((50, 50), (10, 0), rowspan=4, colspan=50)
@@ -482,6 +482,10 @@ def stagetraining_daily (df, save_path, date):
                     axes.hlines(y=[0.2, 0.4], xmin=min(ttype_df.trial), xmax=max(ttype_df.trial), color=lines_c, linestyle=':')
                     axes.set_ylim([0, ttype_df.stim_respwin.max()+0.2])
                     axes.get_legend().remove()
+                    label = 'Max: ' +str(round(ttype_df.stim_respwin.max(), 3)) + ' s\n' +\
+                            'Min: ' + str(round(ttype_df.stim_respwin.min(), 3)) + ' s'
+                    axes.text(1, 0.9, label, transform=axes.transAxes, fontsize=8, fontweight='bold',
+                              verticalalignment='top')
             axes.set_ylabel('Stim duration \n (sec)', label_kwargs)
             axes.set_xlabel('Trials', label_kwargs)
             axes.set_xlim([1, total_trials + 1])
