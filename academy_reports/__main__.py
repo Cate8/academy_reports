@@ -45,10 +45,11 @@ def main():
             for sess, session in df.groupby('session'):
                 subject = session.subject.iloc[0]
                 task = session.task.iloc[0]
-                print(task[0:13])
-                print(sess)
                 stage = session.stage.iloc[0]
                 date = datetime.fromtimestamp(session.STATE_Start_task_START.iloc[0]).strftime("%Y%m%d-%H%M%S")
+                print(task[0:13])
+                print(sess)
+                print(date)
 
                 file_name = subject + '_' + task + '-' + str(stage) + '_' + date + '.pdf'
                 save_path = os.path.join(save_directory, file_name)
