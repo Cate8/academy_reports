@@ -1,9 +1,7 @@
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.lines import Line2D
-from datetime import datetime
 from matplotlib.backends.backend_pdf import PdfPages
 from academy_reports import utils
 
@@ -207,11 +205,12 @@ def intersession(df, save_path_intersesion):
             last_resp_df = resp_df.drop_duplicates(subset=['trial', 'session'], keep='last', inplace=False).copy()
 
             # THRESHOLDS & CHANCE
-            stim_width = df.width.mean()
-            vg_correct_th = df.loc[df.trial_type == 'VG'].correct_th.mean()
-            wm_correct_th = df.loc[df.trial_type != 'VG'].correct_th.mean()
-            vg_repoke_th = df.loc[df.trial_type == 'VG'].repoke_th.mean()
-            wm_repoke_th = df.loc[df.trial_type != 'VG'].repoke_th.mean()
+            stim_width = df.width.mean() / 2
+            vg_correct_th = df.loc[df.trial_type == 'VG'].correct_th.mean() / 2
+            wm_correct_th = df.loc[df.trial_type != 'VG'].correct_th.mean() / 2
+            vg_repoke_th = df.loc[df.trial_type == 'VG'].repoke_th.mean() / 2
+            wm_repoke_th = df.loc[df.trial_type != 'VG'].repoke_th.mean() / 2
+
             vg_chance_p = utils.chance_calculation(vg_correct_th)
             wm_chance_p = utils.chance_calculation(wm_correct_th)
             lines_list = [stim_width, vg_correct_th, vg_repoke_th]
@@ -235,7 +234,7 @@ def intersession(df, save_path_intersesion):
 
             axes.hlines(y=[0.5, 1], xmin=df.session.min(), xmax=total_sessions, color=lines_c, linestyle=':')
             axes.fill_between(df.session, vg_chance_p, 0, facecolor=lines_c, alpha=0.3)
-            axes.fill_between(df.session, wm_chance_p, 0, facecolor=lines2_c, alpha=0.4)
+            axes.fill_between(df.session, wm_chance_p, 0, facecolor=lines2_c, alpha=0.3)
             utils.axes_pcent(axes, label_kwargs)
             axes.get_xaxis().set_ticks([])
             axes.set_xlabel('')
@@ -259,7 +258,11 @@ def intersession(df, save_path_intersesion):
             task_palette = sns.set_palette([correct_other_c], n_colors=len(tasks_list))
             sns.lineplot(x=last_resp_df.session, y=last_resp_df.error_x, hue=last_resp_df.subject,
                          style=last_resp_df.subject, markers=True, ci=None, estimator=np.std, ax=axes)
+
             axes.hlines(y=[stim_width], xmin=x_min, xmax=total_sessions, color=stim_c, linestyle=':')
+            axes.hlines(y=[vg_correct_th, wm_correct_th], xmin=x_min, xmax=total_sessions, color=correct_first_c,
+                        linestyle=':')
+            axes.hlines(y=[vg_repoke_th], xmin=x_min, xmax=total_sessions, color=repoke_th_c, linestyle=':')
             axes.fill_between(first_resp_df.session, stim_width, 0, facecolor=stim_c, alpha=0.1)
             axes.fill_between(first_resp_df.session, 160, 155, facecolor=lines_c, alpha=0.3) #chance
             axes.set_ylabel('STD (mm)', label_kwargs)
@@ -313,7 +316,7 @@ def intersession(df, save_path_intersesion):
             axes.get_legend().remove()
 
         sns.despine()
-#
+
         # SAVING AND CLOSING PAGE 1
         pdf.savefig()
         plt.close()
@@ -329,13 +332,32 @@ def intersession(df, save_path_intersesion):
             sns.lineplot(x=first_resp_df.session, y=first_resp_df.error_x, hue=first_resp_df.trial_type,
                          style=first_resp_df.trial_type, markers=len(ttypes) * ['o'], ax=axes, ci=None)
 
-            axes.hlines(y=[-stim_width / 2, stim_width / 2], xmin=x_min, xmax=total_sessions, color=stim_c,
+            axes.hlines(y=[-stim_width, stim_width], xmin=x_min, xmax=total_sessions, color=stim_c,
                         linestyle=':')
-            axes.fill_between(first_resp_df.session, stim_width / 2, -stim_width/2, color=stim_c, alpha=0.1)
+            axes.fill_between(first_resp_df.session, stim_width, -stim_width, color=stim_c, alpha=0.1)
             axes.set_ylabel('$Errors\ (r_{t}-x_{t})\ (mm)%$', label_kwargs)
             axes.set_ylim(-100, 100)
+            axes.set_xlabel('')
             axes.get_legend().remove()
 
+            # STIMULUS DURATION PLOT
+            subset = df.loc[df['trial_type'] == 'WM_I']
+            subset['stim_respwin'] = subset['stim_duration'] - subset['fixation_time']
+            subset_color = (subset.ttype_colors.unique()).tolist()
+            task_palette = sns.set_palette(subset_color, n_colors=len(subset_color))
+
+            axes = plt.subplot2grid((50, 50), (11, 0), rowspan=6, colspan=50)
+            sns.lineplot(x=subset.session, y=subset.stim_respwin, style=subset.trial_type, markers=True, ax=axes)
+            axes.hlines(y=[0.2, 0.4, 0.6, 0.8, 1], xmin=x_min, xmax=total_sessions, color=lines2_c, linestyle=':', linewidth= 0.5)
+
+            axes.set_ylabel('Stim duration \n (sec)', label_kwargs)
+            axes.set_ylim([0, subset.stim_respwin.max() + 0.1])
+            axes.get_legend().remove()
+
+            last_day = round(subset.stim_respwin.iloc[-1], 2)
+            label = 'Last: ' + str(last_day) + ' sec'
+            axes.text(0.85, 1.05, label, transform=axes.transAxes, fontsize=8, fontweight='bold',
+                      verticalalignment='top')
 
             ### SELECT LAST WEEK SESSIONS
             first_resp_week = first_resp_df[
@@ -343,10 +365,8 @@ def intersession(df, save_path_intersesion):
             last_resp_week = last_resp_df[
                 (last_resp_df['session'] > total_sessions - 6) & (last_resp_df['session'] <= total_sessions)]
 
-
-
             # REPONSES HIST
-            ### order the week ttrial types list
+            ### order weekly ttypes list
             week_ttypes = first_resp_week.trial_type.unique().tolist()
             if 'WM_Ds' in week_ttypes:
                 idx = week_ttypes.index('WM_Ds')
@@ -360,7 +380,7 @@ def intersession(df, save_path_intersesion):
             axes_loc = [0, 11, 21, 31, 41]
             for idx, ttype in enumerate(week_ttypes):
                 subset = first_resp_week.loc[first_resp_week['trial_type'] == ttype]
-                axes = plt.subplot2grid((50, 50), (13, axes_loc[idx]), rowspan=8, colspan=9)
+                axes = plt.subplot2grid((50, 50), (24, axes_loc[idx]), rowspan=8, colspan=9)
                 axes.set_title(ttype, fontsize=11, fontweight='bold')
                 color = subset.ttype_colors.unique()
 
@@ -373,11 +393,10 @@ def intersession(df, save_path_intersesion):
                 if ttype == 'VG':
                     axes.set_ylabel('Nº of touches', label_kwargs)
 
-
             # ERRORS HIST
             for idx, ttype in enumerate(week_ttypes):
                 subset = first_resp_week.loc[first_resp_week['trial_type'] == ttype]
-                axes = plt.subplot2grid((50, 50), (24, axes_loc[idx]), rowspan=8, colspan=9)
+                axes = plt.subplot2grid((50, 50), (35, axes_loc[idx]), rowspan=8, colspan=9)
                 color = subset.ttype_colors.unique()
                 correct_th = subset.correct_th.mean()
 
@@ -387,12 +406,11 @@ def intersession(df, save_path_intersesion):
                 # vertical lines
                 neg_lines_list = [-x for x in lines_list]
                 all_lines = lines_list + neg_lines_list
-                all_lines_error = [x / 2 for x in all_lines]
                 all_colors = lines_list_colors + lines_list_colors
 
-                for idx, line in enumerate(all_lines_error):
+                for idx, line in enumerate(all_lines):
                     axes.axvline(x=line, color=all_colors[idx], linestyle=':', linewidth=1)
-                axes.axvspan(-stim_width / 2, stim_width / 2, color=stim_c, alpha=0.1)
+                axes.axvspan(-stim_width, stim_width, color=stim_c, alpha=0.1)
 
 
                 axes.set_xlabel('$Errors\ (r_{t}-x_{t})\ (mm)%$', label_kwargs)
@@ -400,11 +418,25 @@ def intersession(df, save_path_intersesion):
                 if ttype == 'VG':
                     axes.set_ylabel('Nº of touches', label_kwargs)
 
+            sns.despine()
+
+            # SAVING AND CLOSING PAGE 2
+            pdf.savefig()
+            plt.close()
+
+        if df.shape[0] > 0:
+            # PAGE 3
+            plt.figure(figsize=(11.7, 11.7))  # Apaisat
 
             # ACC TRIAL TYPE
-            axes = plt.subplot2grid((50, 50), (35, 0), rowspan=15, colspan=22)
-            week_ttypes = first_resp_week.trial_type.unique()
-            x_max = len(week_ttypes) - 1
+            axes = plt.subplot2grid((50, 50), (0, 0), rowspan=15, colspan=22)
+            x_axes = (first_resp_week.delay.unique()).tolist()
+            for idx, i in enumerate(x_axes):
+                if i == -1.0:
+                    x_axes[idx] = 'VG'
+                elif i == -0.5:
+                    x_axes[idx] = 'WM_I'
+            x_max = len(x_axes) - 1
 
             # first reponses
             sns.pointplot(x=first_resp_week.delay, y=first_resp_week.correct_bool, ax=axes, color=correct_first_c)
@@ -412,14 +444,15 @@ def intersession(df, save_path_intersesion):
             sns.pointplot(x=last_resp_week.delay, y=last_resp_week.correct_bool, ax=axes, color=correct_other_c)
 
             axes.hlines(y=[0.5, 1], xmin=0, xmax=x_max, color=lines_c, linestyle=':')
-            axes.fill_between(week_ttypes, vg_chance_p, 0, facecolor=lines_c, alpha=0.3)
-            axes.fill_between(week_ttypes, wm_chance_p, 0, facecolor=lines2_c, alpha=0.4)
+            axes.fill_between(x_axes, vg_chance_p, 0, facecolor=lines_c, alpha=0.3)
+            axes.fill_between(x_axes, wm_chance_p, 0, facecolor=lines2_c, alpha=0.4)
 
             axes.set_xlabel('Delay (sec)', label_kwargs)
+            axes.set_xticklabels(x_axes)
             utils.axes_pcent(axes, label_kwargs)
 
             # STD TRIAL TYPE
-            axes = plt.subplot2grid((50, 50), (35, 27), rowspan=15, colspan=22)
+            axes = plt.subplot2grid((50, 50), (0, 27), rowspan=15, colspan=22)
             # first reponses
             sns.pointplot(x=first_resp_week.delay, y=first_resp_week.error_x, ax=axes, color=correct_first_c,
                          estimator=np.std)
@@ -427,9 +460,13 @@ def intersession(df, save_path_intersesion):
             sns.pointplot(x=last_resp_week.delay, y=last_resp_week.error_x, ax=axes, color=correct_other_c,
                           estimator=np.std)
             axes.hlines(y=[stim_width], xmin=0, xmax=len(ttypes) - 1, color=stim_c, linestyle=':')
-            axes.fill_between(week_ttypes, stim_width, 0, facecolor=stim_c, alpha=0.1)
-            axes.fill_between(week_ttypes, 160, 155, facecolor=lines_c, alpha=0.3)  # chance
+            axes.hlines(y=[vg_correct_th, wm_correct_th], xmin=0, xmax=len(ttypes) - 1, color=correct_first_c,
+                        linestyle=':')
+            axes.hlines(y=[vg_repoke_th], xmin=0, xmax=len(ttypes) - 1, color=repoke_th_c, linestyle=':')
+            axes.fill_between(x_axes, stim_width, 0, facecolor=stim_c, alpha=0.1)
+            axes.fill_between(x_axes, 160, 155, facecolor=lines_c, alpha=0.3)  # chance
 
+            axes.set_xticklabels(x_axes)
             axes.set_xlabel('Delay (sec)')
             axes.set_ylabel('STD (mm)')
 

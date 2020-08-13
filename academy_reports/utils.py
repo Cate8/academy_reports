@@ -121,7 +121,7 @@ def create_csv(df, path):
 # CHANCE CALCULATION
 def chance_calculation(correct_th):
     screen_size = 1440 * 0.28
-    chance = 1 / (screen_size / correct_th)
+    chance = correct_th*2 / screen_size
     return chance
 
 # PECRCENTAGE AXES

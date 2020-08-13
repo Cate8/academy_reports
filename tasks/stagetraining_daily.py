@@ -148,22 +148,22 @@ def stagetraining_daily (df, save_path, date):
     reward_drunk =  int(df.reward_drunk.iloc[-1])
 
     # THRESHOLDS & CHANCE
-    stim_width = df.width.iloc[0]
-    vg_correct_th = df.correct_th.unique()[0]
-    vg_repoke_th = df.repoke_th.unique()[0]
+    stim_width = df.width.iloc[0]/2
+    vg_correct_th = df.correct_th.unique()[0]/2
+    vg_repoke_th = df.repoke_th.unique()[0]/2
     vg_chance_p = utils.chance_calculation(vg_correct_th)
     chance_list = [vg_chance_p]
     lines_list = [stim_width, vg_correct_th, vg_repoke_th]
     lines_list_colors = [stim_c, correct_th_c, repoke_th_c]
 
     if len(df.correct_th.unique()) > 1:
-        wm_correct_th = df.correct_th.unique()[1]
+        wm_correct_th = df.correct_th.unique()[1]/2
         wm_chance_p = utils.chance_calculation(wm_correct_th)
         chance_list.append(wm_chance_p)
         lines_list.append(wm_correct_th)
         lines_list_colors.append(correct_th_c)
     if len(df.repoke_th.unique()) > 1:
-        wm_repoke_th = df.repoke_th.unique()[1]
+        wm_repoke_th = df.repoke_th.unique()[1]/2
         lines_list.append(wm_repoke_th)
         lines_list_colors.append(repoke_th_c)
 
@@ -260,6 +260,8 @@ def stagetraining_daily (df, save_path, date):
         sns.pointplot(x=last_resp_df.trial_type, y=last_resp_df.error_x, s=20, ax=axes,
                       color=correct_other_c, order=ttypes, estimator=np.std)
         axes.hlines(y=[stim_width], xmin=0, xmax=len(ttypes) - 1, color=stim_c, linestyle=':')
+        axes.hlines(y=[vg_correct_th, wm_correct_th], xmin=0, xmax=len(ttypes) - 1, color=correct_first_c, linestyle=':')
+        axes.hlines(y=[vg_repoke_th], xmin=0, xmax=len(ttypes) - 1, color=repoke_th_c, linestyle=':')
         axes.fill_between(ttypes, stim_width, 0, facecolor=stim_c, alpha=0.2)  # chance
         axes.fill_between(ttypes, 160, 155, facecolor=lines_c, alpha=0.3) #chance
 
@@ -389,17 +391,16 @@ def stagetraining_daily (df, save_path, date):
         sns.scatterplot(x=resp_df.error_x, y=resp_df.trial, hue=resp_df.response_result, style=resp_df.trial_type,
                         s=20, ax=axes, zorder=20)
         axes.barh(list(df.trial), width=800, color=lines2_c, left=-400, height=0.7, alpha=0.4, zorder=0)
-        axes.axvspan(-stim_width/2, stim_width/2, color=stim_c,  alpha=0.1)
+        axes.axvspan(-stim_width, stim_width, color=stim_c,  alpha=0.1)
 
         #vertical lines
         neg_lines_list = [-x for x in lines_list]
         all_lines = lines_list + neg_lines_list
-        all_lines_error = [x / 2 for x in all_lines]
         all_colors = lines_list_colors + lines_list_colors
 
-        for idx, line in enumerate(all_lines_error):
+        for idx, line in enumerate(all_lines):
             axes.axvline(x=line, color=all_colors[idx], linestyle=':', linewidth=1)
-        axes.axvspan(-stim_width/2, stim_width/2, color=stim_c,  alpha=0.1)
+        axes.axvspan(-stim_width, stim_width, color=stim_c,  alpha=0.1)
 
         axes.set_xlabel('')
         axes.set_ylabel('')
@@ -417,9 +418,9 @@ def stagetraining_daily (df, save_path, date):
                      hist_kws={'alpha': 0.9, 'histtype': 'step', 'linewidth': 2})
 
         #vertical lines
-        for idx, line in enumerate(all_lines_error):
+        for idx, line in enumerate(all_lines):
             axes.axvline(x=line, color=all_colors[idx], linestyle=':', linewidth=1)
-        axes.axvspan(-stim_width / 2, stim_width / 2, color=stim_c, alpha=0.1)
+        axes.axvspan(-stim_width, stim_width, color=stim_c, alpha=0.1)
 
         axes.set_xlabel('$Errors\ (r_{t}-x_{t})\ (mm)%$', label_kwargs)
         axes.set_ylabel('')
@@ -555,8 +556,8 @@ def stagetraining_daily (df, save_path, date):
         axes = plt.subplot2grid((50, 50), (18, 33), rowspan=9, colspan=17)
 
         sns.pointplot(x='xt_bins', y="error_x", data=first_resp_df, hue='trial_type', s=3, ax=axes)
-        axes.hlines(y=[-stim_width/2, stim_width/2], xmin=min(x_ax_ticks), xmax=max(x_ax_ticks), color=stim_c, linestyle=':')
-        axes.fill_between(x_ax_ticks, stim_width/2, -stim_width/2, facecolor=stim_c, alpha=0.1)
+        axes.hlines(y=[-stim_width, stim_width], xmin=min(x_ax_ticks), xmax=max(x_ax_ticks), color=stim_c, linestyle=':')
+        axes.fill_between(x_ax_ticks, stim_width, -stim_width, facecolor=stim_c, alpha=0.1)
 
         axes.set_xticks(x_ax_ticks)
         axes.set_xticklabels(['0', '100', '200', '300', '400'])
@@ -594,9 +595,9 @@ def stagetraining_daily (df, save_path, date):
             sns.distplot(subset.error_x, kde=False, bins=bins_err, color=color, ax=axes,
                          hist_kws={'alpha': 0.9})
             # vertical lines
-            for idx, line in enumerate(all_lines_error):
+            for idx, line in enumerate(all_lines):
                 axes.axvline(x=line, color=all_colors[idx], linestyle=':', linewidth=1)
-            axes.axvspan(-stim_width / 2, stim_width / 2, color=stim_c, alpha=0.1)
+            axes.axvspan(-stim_width, stim_width, color=stim_c, alpha=0.1)
 
             axes.set_xlabel('$Errors\ (r_{t}-x_{t})\ (mm)%$', label_kwargs)
             axes.set_ylabel('')
