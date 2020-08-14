@@ -146,6 +146,15 @@ def stagetraining_daily (df, save_path, date):
     valid_trials = (df.loc[df['trial_result'] != 'miss']).shape[0]
     missed_trials = total_trials - valid_trials
     reward_drunk =  int(df.reward_drunk.iloc[-1])
+    task = df.task.iloc[0]
+    try:
+        stage = df.stage.iloc[0]
+    except:
+        stage = np.nan
+    try:
+        substage = df.substage.iloc[0]
+    except:
+        substage = np.nan
 
     # THRESHOLDS & CHANCE
     stim_width = df.width.iloc[0]/2
@@ -247,8 +256,12 @@ def stagetraining_daily (df, save_path, date):
         sns.pointplot(x=last_resp_df.trial_type, y=last_resp_df.correct_bool, s=20, ax=axes,
                       color=correct_other_c, order=ttypes)
         axes.hlines(y=[0.5, 1], xmin=0, xmax=len(ttypes) - 1, color=lines_c, linestyle=':')
-        axes.fill_between(ttypes, chance_list, 0, facecolor=lines_c, alpha=0.3)
+        chance_list2 = chance_list.copy()
+        for idx, i in enumerate(first_resp_df.trial_type.unique()):
+            if idx > 1:
+                chance_list2.append(chance_list[1])
 
+        axes.fill_between(ttypes, chance_list2, 0, facecolor=lines_c, alpha=0.3)
         axes.set_xlabel('')
         utils.axes_pcent(axes, label_kwargs)
 
@@ -467,26 +480,50 @@ def stagetraining_daily (df, save_path, date):
         lines = [Line2D([0], [0], color=c, marker='o', markersize=7, markerfacecolor=c) for c in colors]
         axes.legend(lines, labels, fontsize=8, title="Trial type", bbox_to_anchor=(1.05, 0.9), loc='center')
 
-        # TRIAL TYPE PROBABILITY PROGRESSIONS // STIMULUS LENGHT PLOT
+        # TRIAL TYPE PROBABILITY PROGRESSIONS // STIMULUS LENGHT PLOT // DELAY LENGHT PLOT
         axes = plt.subplot2grid((50, 50), (10, 0), rowspan=4, colspan=50)
 
-        check = df['task'].str.contains("StageTraining_2B_V5")
+        # DELAY LENGHT PLOT
+        if task == "StageTraining_2B_V6" and stage == 3 and substage == 2:
+            dtypes = df.delay_type.unique()
+            dtype_colors = []
+            for i in dtypes:
+                if i == 'DS':
+                    dtype_colors.append(wmds_c)
+                elif i == 'DM':
+                    dtype_colors.append(wmdm_c)
+                elif i == 'DL':
+                    dtype_colors.append(wmdl_c)
+
+            dtypes_palette = sns.set_palette(dtype_colors, n_colors=len(dtype_colors))
+            axes = plt.subplot2grid((50, 50), (0, 0), rowspan=35, colspan=50)
+            sns.lineplot(x=df.trial, y=df.delay, hue=df.delay_type, style=df.delay_type, markers=True, ax=axes)
+            axes.set_ylabel('Delay (sec)', label_kwargs)
+
 
         # STIMULUS DURATION PLOT
-        if check.shape[0] > 0:
+        elif task == "StageTraining_2B_V5" or task == "StageTraining_2B_V6":
             for ttype, ttype_df in df.groupby('trial_type'):
                 if ttype == 'WM_I':
                     ttype_color = ttype_df.ttype_colors.iloc[0]
                     ttype_df['stim_respwin'] = ttype_df['stim_duration'] - ttype_df['fixation_time']
                     sns.lineplot(x=ttype_df.trial, y=ttype_df.stim_respwin, style=ttype_df.trial_type, markers=True,
                                  ax=axes, color=ttype_color)
-                    axes.hlines(y=[0.2, 0.4], xmin=min(ttype_df.trial), xmax=max(ttype_df.trial), color=lines_c, linestyle=':')
-                    axes.set_ylim([0, ttype_df.stim_respwin.max()+0.2])
+                    axes.hlines(y=[0.2, 0.4], xmin=min(ttype_df.trial), xmax=max(ttype_df.trial), color=lines_c,
+                                linestyle=':')
+                    y_max = ttype_df.stim_respwin.max() + 0.2
                     axes.get_legend().remove()
-                    label = 'Max: ' +str(round(ttype_df.stim_respwin.max(), 3)) + ' s\n' +\
+                    label = 'Max: ' + str(round(ttype_df.stim_respwin.max(), 3)) + ' s\n' + \
                             'Min: ' + str(round(ttype_df.stim_respwin.min(), 3)) + ' s'
                     axes.text(1, 0.9, label, transform=axes.transAxes, fontsize=8, fontweight='bold',
                               verticalalignment='top')
+                elif ttype == 'WM_Ds':
+                    ttype_color = ttype_df.ttype_colors.iloc[0]
+                    sns.lineplot(x=ttype_df.trial, y=ttype_df.delay, style=ttype_df.trial_type, markers=True,
+                                 ax=axes, color=ttype_color)
+                    axes.get_legend().remove()
+
+            axes.set_ylim([-0.05, y_max])
             axes.set_ylabel('Stim duration \n (sec)', label_kwargs)
             axes.set_xlabel('Trials', label_kwargs)
             axes.set_xlim([1, total_trials + 1])
@@ -494,8 +531,7 @@ def stagetraining_daily (df, save_path, date):
 
         # PROBS PLOT
         else:
-            check = df[df['task'].str.contains("StageTraining_2B_V4")]
-            if check.shape[0] > 0:
+            if task == "StageTraining_2B_V4":
                 probs_list = [df.pvg, df.pwm_i, df.pwm_ds, df.pwm_dm, df.pwm_dl]
                 df['pwm_d'] = df.pwm_ds + df.pwm_dm + df.pwm_dl
             else:

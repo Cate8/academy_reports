@@ -60,6 +60,9 @@ def intersession(df, save_path_intersesion):
     weight = df.subject_weight.iloc[-1]
 
     # RELEVANT COLUMNS
+    df['all_task'] = df['task'].copy()
+    df.loc[((df.task != 'LickTeaching') & (df.task != 'TouchTeaching'), 'task')] = 'StageTraining'
+
     ### latencies
     df['resp_latency'] = np.nan
     df['lick_latency'] = np.nan
@@ -346,11 +349,12 @@ def intersession(df, save_path_intersesion):
             subset_color = (subset.ttype_colors.unique()).tolist()
             task_palette = sns.set_palette(subset_color, n_colors=len(subset_color))
 
-            axes = plt.subplot2grid((50, 50), (11, 0), rowspan=6, colspan=50)
+            axes = plt.subplot2grid((50, 50), (11, 0), rowspan=5, colspan=50)
             sns.lineplot(x=subset.session, y=subset.stim_respwin, style=subset.trial_type, markers=True, ax=axes)
             axes.hlines(y=[0.2, 0.4, 0.6, 0.8, 1], xmin=x_min, xmax=total_sessions, color=lines2_c, linestyle=':', linewidth= 0.5)
 
-            axes.set_ylabel('Stim duration \n (sec)', label_kwargs)
+            axes.set_xlabel('')
+            axes.set_ylabel('Stim duration \n WM_I trials (sec)', label_kwargs)
             axes.set_ylim([0, subset.stim_respwin.max() + 0.1])
             axes.get_legend().remove()
 
@@ -358,6 +362,23 @@ def intersession(df, save_path_intersesion):
             label = 'Last: ' + str(last_day) + ' sec'
             axes.text(0.85, 1.05, label, transform=axes.transAxes, fontsize=8, fontweight='bold',
                       verticalalignment='top')
+
+            # DELAY LENGHT PLOT
+            dtypes = df.delay_type.unique()
+            dtype_colors = []
+            for i in dtypes:
+                if i == 'DS':
+                    dtype_colors.append(wmds_c)
+                elif i == 'DM':
+                    dtype_colors.append(wmdm_c)
+                elif i == 'DL':
+                    dtype_colors.append(wmdl_c)
+
+            dtypes_palette = sns.set_palette(dtype_colors, n_colors=len(dtype_colors))
+            axes = plt.subplot2grid((50, 50), (18, 0), rowspan=5, colspan=50)
+            sns.lineplot(x=df.session, y=df.delay, hue=df.delay_type, style=df.delay_type, markers=True, ax=axes)
+            axes.set_ylabel('Delay (sec)', label_kwargs)
+
 
             ### SELECT LAST WEEK SESSIONS
             first_resp_week = first_resp_df[
@@ -380,7 +401,7 @@ def intersession(df, save_path_intersesion):
             axes_loc = [0, 11, 21, 31, 41]
             for idx, ttype in enumerate(week_ttypes):
                 subset = first_resp_week.loc[first_resp_week['trial_type'] == ttype]
-                axes = plt.subplot2grid((50, 50), (24, axes_loc[idx]), rowspan=8, colspan=9)
+                axes = plt.subplot2grid((50, 50), (31, axes_loc[idx]), rowspan=8, colspan=9)
                 axes.set_title(ttype, fontsize=11, fontweight='bold')
                 color = subset.ttype_colors.unique()
 
@@ -396,7 +417,7 @@ def intersession(df, save_path_intersesion):
             # ERRORS HIST
             for idx, ttype in enumerate(week_ttypes):
                 subset = first_resp_week.loc[first_resp_week['trial_type'] == ttype]
-                axes = plt.subplot2grid((50, 50), (35, axes_loc[idx]), rowspan=8, colspan=9)
+                axes = plt.subplot2grid((50, 50), (42, axes_loc[idx]), rowspan=8, colspan=9)
                 color = subset.ttype_colors.unique()
                 correct_th = subset.correct_th.mean()
 
@@ -444,8 +465,12 @@ def intersession(df, save_path_intersesion):
             sns.pointplot(x=last_resp_week.delay, y=last_resp_week.correct_bool, ax=axes, color=correct_other_c)
 
             axes.hlines(y=[0.5, 1], xmin=0, xmax=x_max, color=lines_c, linestyle=':')
-            axes.fill_between(x_axes, vg_chance_p, 0, facecolor=lines_c, alpha=0.3)
-            axes.fill_between(x_axes, wm_chance_p, 0, facecolor=lines2_c, alpha=0.4)
+            chance_list = [vg_chance_p]
+            for i in (first_resp_week.trial_type.unique()):
+                if i != 'VG':
+                    chance_list.append(wm_chance_p)
+
+            axes.fill_between(first_resp_week.trial_type.unique(), chance_list, 0, facecolor=lines_c, alpha=0.3)
 
             axes.set_xlabel('Delay (sec)', label_kwargs)
             axes.set_xticklabels(x_axes)
@@ -463,8 +488,8 @@ def intersession(df, save_path_intersesion):
             axes.hlines(y=[vg_correct_th, wm_correct_th], xmin=0, xmax=len(ttypes) - 1, color=correct_first_c,
                         linestyle=':')
             axes.hlines(y=[vg_repoke_th], xmin=0, xmax=len(ttypes) - 1, color=repoke_th_c, linestyle=':')
-            axes.fill_between(x_axes, stim_width, 0, facecolor=stim_c, alpha=0.1)
-            axes.fill_between(x_axes, 160, 155, facecolor=lines_c, alpha=0.3)  # chance
+            axes.fill_between(first_resp_week.trial_type.unique(), stim_width, 0, facecolor=stim_c, alpha=0.1)
+            axes.fill_between(first_resp_week.trial_type.unique(), 160, 155, facecolor=lines_c, alpha=0.3)  # chance
 
             axes.set_xticklabels(x_axes)
             axes.set_xlabel('Delay (sec)')
@@ -479,7 +504,7 @@ def intersession(df, save_path_intersesion):
 
             sns.despine()
 
-            # SAVING AND CLOSING PAGE 2
+            # SAVING AND CLOSING PAGE 3
             pdf.savefig()
             plt.close()
 
