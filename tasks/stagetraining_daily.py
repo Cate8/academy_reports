@@ -45,7 +45,7 @@ bins_err = np.linspace(-r_edge, r_edge, 12)
 
 def stagetraining_daily (df, save_path, date):
 
-    # FIX FIXATIO TIME WHEN IS EMPTY
+    # FIXATION TIME WHEN IS EMPTY
     df['fixation_time'] = df['fixation_time'].fillna(1)
 
     # FIX DELAY TYPE IN THE FIRST SESSIONS
@@ -123,6 +123,7 @@ def stagetraining_daily (df, save_path, date):
     # RELEVANT COLUMNS
     resp_df['resp_latency'] = resp_df['responses_time'] - resp_df['STATE_Response_window_START']
     resp_df['error_x'] = resp_df['response_x'] - resp_df['x']
+    resp_df['abs_error_x'] = resp_df['error_x'].abs()
     resp_df['correct_bool'] = np.where(resp_df['correct_th'] / 2 >= resp_df['error_x'].abs(), 1, 0)
     resp_df.loc[(resp_df.trial_result == 'miss', 'correct_bool')] = np.nan
     # Correct_bool column: 1 correct; 0 incorrects/punish; nan miss
@@ -480,8 +481,23 @@ def stagetraining_daily (df, save_path, date):
         lines = [Line2D([0], [0], color=c, marker='o', markersize=7, markerfacecolor=c) for c in colors]
         axes.legend(lines, labels, fontsize=8, title="Trial type", bbox_to_anchor=(1.05, 0.9), loc='center')
 
+        # STD TRIAL INDEX & TRIAL TYPE
+        axes = plt.subplot2grid((50, 50), (10, 0), rowspan=8, colspan=50)
+
+        for ttype, ttype_df in first_resp_df.groupby('trial_type'):
+            ttype_color = ttype_df.ttype_colors.iloc[0]
+            ttype_df['err'] = utils.compute_window(ttype_df.abs_error_x, 20)
+            a = sns.scatterplot(x=ttype_df.trial, y=ttype_df.err, s=20, ax=axes, color=ttype_color, label=ttype)
+            sns.lineplot(x=ttype_df.trial, y=ttype_df.err, ax=axes, color=ttype_color, label=ttype)
+
+        axes.hlines(y=155, xmin=0, xmax=total_trials, color=lines_c, linestyle=':')
+        axes.set_xlabel('')
+        axes.set_ylabel('Abs Error (mm)')
+        axes.set_xlim([1, total_trials + 1])
+        axes.get_legend().remove()
+
         # TRIAL TYPE PROBABILITY PROGRESSIONS // STIMULUS LENGHT PLOT // DELAY LENGHT PLOT
-        axes = plt.subplot2grid((50, 50), (10, 0), rowspan=4, colspan=50)
+        axes = plt.subplot2grid((50, 50), (20, 0), rowspan=4, colspan=50)
 
         # DELAY LENGHT PLOT
         if task == "StageTraining_2B_V6" and stage == 3 and substage == 2:
@@ -551,57 +567,6 @@ def stagetraining_daily (df, save_path, date):
             axes.get_legend().remove()
 
 
-        # ACCURACY STIMULUS POSITION & TRIAL TYPE
-        #first poke
-        axes = plt.subplot2grid((50, 50), (18, 0), rowspan=9, colspan=14)
-
-        first_resp_df['xt_bins'] = pd.cut(first_resp_df.x, bins=bins_resp, labels=False, include_lowest=True)
-        x_ax_ticks = list(np.linspace(-0.5, 4.5, 5))
-
-        sns.pointplot(x='xt_bins', y="correct_bool", data=first_resp_df, hue='trial_type', s=3)
-        axes.hlines(y=[0.5, 1], xmin=min(x_ax_ticks), xmax=max(x_ax_ticks), color=lines_c, linestyle=':')
-        for idx, i in enumerate(chance_list):
-            axes.fill_between(x_ax_ticks, chance_list[idx], 0, facecolor=lines_c_list[idx], alpha=0.3)
-
-        axes.set_xticks(x_ax_ticks)
-        axes.set_xticklabels(['0', '100', '200', '300', '400'])
-        axes.set_xlabel('$Stimulus position\ (x_{t})\ (mm)%$', label_kwargs)
-        utils.axes_pcent(axes, label_kwargs)
-        axes.set_title('First poke', fontsize=11, fontweight='bold')
-        axes.get_legend().remove()
-
-        #last poke
-        axes = plt.subplot2grid((50, 50), (18, 15), rowspan=9, colspan=14)
-        last_resp_df['xt_bins'] = pd.cut(last_resp_df.x, bins=bins_resp, labels=False, include_lowest=True)
-
-        sns.pointplot(x='xt_bins', y="correct_bool", data=last_resp_df, hue='trial_type', s=3)
-        axes.hlines(y=[0.5, 1], xmin=min(x_ax_ticks), xmax=max(x_ax_ticks), color=lines_c, linestyle=':')
-        for idx, i in enumerate(chance_list):
-            axes.fill_between(x_ax_ticks, chance_list[idx], 0, facecolor=lines_c_list[idx], alpha=0.3)
-
-        axes.set_xticks(x_ax_ticks)
-        axes.set_xticklabels(['0', '100', '200', '300', '400'])
-        axes.set_xlabel('$Stimulus position\ (x_{t})\ (mm)%$', label_kwargs)
-        utils.axes_pcent(axes, label_kwargs)
-        axes.set_ylabel('')
-        axes.yaxis.set_ticklabels([])
-        axes.set_title('Last poke', fontsize=11, fontweight='bold')
-        axes.get_legend().remove()
-
-        # ERROR VS STIMULUS POSITION
-        axes = plt.subplot2grid((50, 50), (18, 33), rowspan=9, colspan=17)
-
-        sns.pointplot(x='xt_bins', y="error_x", data=first_resp_df, hue='trial_type', s=3, ax=axes)
-        axes.hlines(y=[-stim_width, stim_width], xmin=min(x_ax_ticks), xmax=max(x_ax_ticks), color=stim_c, linestyle=':')
-        axes.fill_between(x_ax_ticks, stim_width, -stim_width, facecolor=stim_c, alpha=0.1)
-
-        axes.set_xticks(x_ax_ticks)
-        axes.set_xticklabels(['0', '100', '200', '300', '400'])
-        axes.set_title('First poke', fontsize=11, fontweight='bold')
-        axes.set_xlabel('$Stimulus position\ (x_{t})\ (mm)%$', label_kwargs)
-        axes.set_ylabel('$Error\ (r_{t}\ -\ x_{t})\ (mm)$', label_kwargs)
-        axes.get_legend().remove()
-
         # RESPONSES HISTOGRAMS
         axes_loc = [0, 11, 21, 31, 41]
         for axes_idx, ttype in enumerate(ttypes):
@@ -641,6 +606,67 @@ def stagetraining_daily (df, save_path, date):
                 axes.set_ylabel('Nº of touches', label_kwargs)
         sns.despine()
 
+
+        # SAVING AND CLOSING PAGE
+        pdf.savefig()
+        plt.close()
+
+        # PAGE 4
+        plt.figure(figsize=(11.7, 11.7))
+
+
+        # ACCURACY STIMULUS POSITION & TRIAL TYPE
+        #first poke
+        axes = plt.subplot2grid((50, 50), (0, 0), rowspan=9, colspan=14)
+
+        first_resp_df['xt_bins'] = pd.cut(first_resp_df.x, bins=bins_resp, labels=False, include_lowest=True)
+        x_ax_ticks = list(np.linspace(-0.5, 4.5, 5))
+
+        sns.pointplot(x='xt_bins', y="correct_bool", data=first_resp_df, hue='trial_type', s=3)
+        axes.hlines(y=[0.5, 1], xmin=min(x_ax_ticks), xmax=max(x_ax_ticks), color=lines_c, linestyle=':')
+        for idx, i in enumerate(chance_list):
+            axes.fill_between(x_ax_ticks, chance_list[idx], 0, facecolor=lines_c_list[idx], alpha=0.3)
+
+        axes.set_xticks(x_ax_ticks)
+        axes.set_xticklabels(['0', '100', '200', '300', '400'])
+        axes.set_xlabel('$Stimulus position\ (x_{t})\ (mm)%$', label_kwargs)
+        utils.axes_pcent(axes, label_kwargs)
+        axes.set_title('First poke', fontsize=11, fontweight='bold')
+        axes.get_legend().remove()
+
+        #last poke
+        axes = plt.subplot2grid((50, 50), (0, 15), rowspan=9, colspan=14)
+        last_resp_df['xt_bins'] = pd.cut(last_resp_df.x, bins=bins_resp, labels=False, include_lowest=True)
+
+        sns.pointplot(x='xt_bins', y="correct_bool", data=last_resp_df, hue='trial_type', s=3)
+        axes.hlines(y=[0.5, 1], xmin=min(x_ax_ticks), xmax=max(x_ax_ticks), color=lines_c, linestyle=':')
+        for idx, i in enumerate(chance_list):
+            axes.fill_between(x_ax_ticks, chance_list[idx], 0, facecolor=lines_c_list[idx], alpha=0.3)
+
+        axes.set_xticks(x_ax_ticks)
+        axes.set_xticklabels(['0', '100', '200', '300', '400'])
+        axes.set_xlabel('$Stimulus position\ (x_{t})\ (mm)%$', label_kwargs)
+        utils.axes_pcent(axes, label_kwargs)
+        axes.set_ylabel('')
+        axes.yaxis.set_ticklabels([])
+        axes.set_title('Last poke', fontsize=11, fontweight='bold')
+        axes.get_legend().remove()
+
+        # ERROR VS STIMULUS POSITION
+        axes = plt.subplot2grid((50, 50), (0, 33), rowspan=9, colspan=17)
+
+        sns.pointplot(x='xt_bins', y="error_x", data=first_resp_df, hue='trial_type', s=3, ax=axes)
+        axes.hlines(y=[-stim_width, stim_width], xmin=min(x_ax_ticks), xmax=max(x_ax_ticks), color=stim_c, linestyle=':')
+        axes.fill_between(x_ax_ticks, stim_width, -stim_width, facecolor=stim_c, alpha=0.1)
+
+        axes.set_xticks(x_ax_ticks)
+        axes.set_xticklabels(['0', '100', '200', '300', '400'])
+        axes.set_title('First poke', fontsize=11, fontweight='bold')
+        axes.set_xlabel('$Stimulus position\ (x_{t})\ (mm)%$', label_kwargs)
+        axes.set_ylabel('$Error\ (r_{t}\ -\ x_{t})\ (mm)$', label_kwargs)
+        axes.get_legend().remove()
+
+        sns.despine()
 
         # SAVING AND CLOSING PAGE
         pdf.savefig()
