@@ -162,6 +162,7 @@ def stagetraining_daily (df, save_path, date):
     vg_correct_th = df.correct_th.unique()[0]/2
     vg_repoke_th = df.repoke_th.unique()[0]/2
     vg_chance_p = utils.chance_calculation(vg_correct_th)
+    threshold_list = [vg_correct_th]
     chance_list = [vg_chance_p]
     lines_list = [stim_width, vg_correct_th, vg_repoke_th]
     lines_list_colors = [stim_c, correct_th_c, repoke_th_c]
@@ -169,6 +170,7 @@ def stagetraining_daily (df, save_path, date):
     if len(df.correct_th.unique()) > 1:
         wm_correct_th = df.correct_th.unique()[1]/2
         wm_chance_p = utils.chance_calculation(wm_correct_th)
+        threshold_list.append(wm_correct_th)
         chance_list.append(wm_chance_p)
         lines_list.append(wm_correct_th)
         lines_list_colors.append(correct_th_c)
@@ -184,7 +186,8 @@ def stagetraining_daily (df, save_path, date):
     total_acc_dict = {}
     for ttype in ttypes:
         ttype_df =  first_resp_df.loc[first_resp_df['trial_type'] == ttype]
-        total_acc_dict[ttype] = ttype_df.correct_bool.mean()
+        single_acc = ttype_df.correct_bool.mean() if ttype_df.shape[0] != 0 else 0.0
+        total_acc_dict[ttype] = single_acc
 
     total_acc_ttype = ''
     for key, value in total_acc_dict.items():
@@ -258,7 +261,7 @@ def stagetraining_daily (df, save_path, date):
                       color=correct_other_c, order=ttypes)
         axes.hlines(y=[0.5, 1], xmin=0, xmax=len(ttypes) - 1, color=lines_c, linestyle=':')
         chance_list2 = chance_list.copy()
-        for idx, i in enumerate(first_resp_df.trial_type.unique()):
+        for idx, i in enumerate(df.trial_type.unique()):
             if idx > 1:
                 chance_list2.append(chance_list[1])
 
@@ -274,7 +277,9 @@ def stagetraining_daily (df, save_path, date):
         sns.pointplot(x=last_resp_df.trial_type, y=last_resp_df.error_x, s=20, ax=axes,
                       color=correct_other_c, order=ttypes, estimator=np.std)
         axes.hlines(y=[stim_width], xmin=0, xmax=len(ttypes) - 1, color=stim_c, linestyle=':')
-        axes.hlines(y=[vg_correct_th, wm_correct_th], xmin=0, xmax=len(ttypes) - 1, color=correct_first_c, linestyle=':')
+
+        for th in threshold_list:
+            axes.hlines(y=th, xmin=0, xmax=len(ttypes) - 1, color=correct_first_c, linestyle=':')
         axes.hlines(y=[vg_repoke_th], xmin=0, xmax=len(ttypes) - 1, color=repoke_th_c, linestyle=':')
         axes.fill_between(ttypes, stim_width, 0, facecolor=stim_c, alpha=0.2)  # chance
         axes.fill_between(ttypes, 160, 155, facecolor=lines_c, alpha=0.3) #chance
