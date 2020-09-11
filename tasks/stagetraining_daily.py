@@ -78,9 +78,10 @@ def stagetraining_daily (df, save_path, date):
         ttypes.pop(idx)
         ttypes.insert(1, "WM_Ds")
         if 'WM_I' in ttypes:
-            idx = ttypes.index('WM_I')
-            ttypes.pop(idx)
-            ttypes.insert(1, "WM_I")
+            if 'VG' in ttypes:
+                idx = ttypes.index('WM_I')
+                ttypes.pop(idx)
+                ttypes.insert(1, "WM_I")
 
     # RELEVANT COLUMNS
     ###colors to plot columns
@@ -505,7 +506,7 @@ def stagetraining_daily (df, save_path, date):
         axes = plt.subplot2grid((50, 50), (20, 0), rowspan=4, colspan=50)
 
         # DELAY LENGHT PLOT
-        if task == "StageTraining_2B_V6" and stage == 3 and substage == 2:
+        if task == "StageTraining_2B_V6" and stage == 3 and substage == 2 or task == "StageTraining_MA_V3" and stage == 3:
             dtypes = df.delay_type.unique()
             dtype_colors = []
             for i in dtypes:
@@ -523,7 +524,7 @@ def stagetraining_daily (df, save_path, date):
 
 
         # STIMULUS DURATION PLOT
-        elif task == "StageTraining_2B_V5" or task == "StageTraining_2B_V6":
+        elif task == "StageTraining_2B_V5" or task == "StageTraining_2B_V6" or task == "StageTraining_MA_V3" and stage == 2:
             for ttype, ttype_df in df.groupby('trial_type'):
                 if ttype == 'WM_I':
                     ttype_color = ttype_df.ttype_colors.iloc[0]
