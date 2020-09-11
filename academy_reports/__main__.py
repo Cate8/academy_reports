@@ -73,7 +73,7 @@ def main():
 
     # GLOBAL DF
     global_df = pd.concat(dfs)
-    save_directory = os.path.join(settings.global_directory)
+    save_directory = os.path.join(settings.save_directory)
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
     utils.create_csv(global_df, save_directory + 'global_trials.csv')
