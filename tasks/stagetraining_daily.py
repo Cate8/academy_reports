@@ -243,6 +243,7 @@ def stagetraining_daily (df, save_path, date):
         axes.hlines(y=[0.5, 1], xmin=0, xmax=total_trials, color=lines_c, linestyle=':')
         for idx, i in enumerate(chance_list):
             axes.fill_between(df.trial, chance_list[idx], 0, facecolor=lines_c_list[idx], alpha=0.3)
+        df.loc[(df.trial_type == 'WM_I', 'ttype_colors')] = wmi_c
 
         axes.set_xlabel('Trial')
         axes.set_xlim([1, total_trials + 1])
@@ -263,8 +264,11 @@ def stagetraining_daily (df, save_path, date):
         axes.hlines(y=[0.5, 1], xmin=0, xmax=len(ttypes) - 1, color=lines_c, linestyle=':')
         chance_list2 = chance_list.copy()
         for idx, i in enumerate(df.trial_type.unique()):
-            if idx > 1:
-                chance_list2.append(chance_list[1])
+            if idx >= 1:
+                if len(chance_list) > 1:
+                    chance_list2.append(chance_list[1])
+                else:
+                    chance_list2.append(chance_list[0])
 
         axes.fill_between(ttypes, chance_list2, 0, facecolor=lines_c, alpha=0.3)
         axes.set_xlabel('')
@@ -506,7 +510,8 @@ def stagetraining_daily (df, save_path, date):
         axes = plt.subplot2grid((50, 50), (20, 0), rowspan=4, colspan=50)
 
         # DELAY LENGHT PLOT
-        if task == "StageTraining_2B_V6" and stage == 3 and substage == 2 or task == "StageTraining_MA_V3" and stage == 3:
+        if task == "StageTraining_2B_V6" and stage == 3 and substage == 2 or task == "StageTraining_MA_V3" and stage == 3\
+                or task == "StageTraining_2B_V6" and stage == 4:
             dtypes = df.delay_type.unique()
             dtype_colors = []
             for i in dtypes:
@@ -518,9 +523,15 @@ def stagetraining_daily (df, save_path, date):
                     dtype_colors.append(wmdl_c)
 
             dtypes_palette = sns.set_palette(dtype_colors, n_colors=len(dtype_colors))
-            axes = plt.subplot2grid((50, 50), (0, 0), rowspan=35, colspan=50)
             sns.lineplot(x=df.trial, y=df.delay, hue=df.delay_type, style=df.delay_type, markers=True, ax=axes)
+            dl_df = df.loc[df['delay_type']== 'DL']
+            if dl_df.shape[0] > 1:
+                label = 'Max: ' + str(round(dl_df.delay.max(), 2)) + ' s\n' + \
+                        'Min: ' + str(round(dl_df.delay.min(), 2)) + ' s'
+                axes.text(1, 0.9, label, transform=axes.transAxes, fontsize=8, fontweight='bold',
+                          verticalalignment='top')
             axes.set_ylabel('Delay (sec)', label_kwargs)
+            axes.get_legend().remove()
 
 
         # STIMULUS DURATION PLOT
@@ -624,6 +635,7 @@ def stagetraining_daily (df, save_path, date):
         # ACCURACY STIMULUS POSITION & TRIAL TYPE
         #first poke
         axes = plt.subplot2grid((50, 50), (0, 0), rowspan=9, colspan=14)
+        ttype_palette = sns.set_palette(ttype_colors, n_colors=len(ttype_colors))
 
         first_resp_df['xt_bins'] = pd.cut(first_resp_df.x, bins=bins_resp, labels=False, include_lowest=True)
         x_ax_ticks = list(np.linspace(-0.5, 4.5, 5))

@@ -187,6 +187,19 @@ def intersession(df, save_path_intersesion):
             df.loc[(df.trial_type == 'WM_Dl', 'ttype_colors')] = wmdl_c
             ttype_colors = df.ttype_colors.unique().tolist()
 
+            # THRESHOLDS & CHANCE
+            stim_width = df.width.mean() / 2
+            vg_correct_th = df.loc[df.trial_type == 'VG'].correct_th.mean() / 2
+            wm_correct_th = df.loc[df.trial_type != 'VG'].correct_th.mean() / 2
+            vg_repoke_th = df.loc[df.trial_type == 'VG'].repoke_th.mean() / 2
+            wm_repoke_th = df.loc[df.trial_type != 'VG'].repoke_th.mean() / 2
+
+            vg_chance_p = utils.chance_calculation(vg_correct_th)
+            wm_chance_p = utils.chance_calculation(wm_correct_th)
+            lines_list = [stim_width, vg_correct_th, vg_repoke_th]
+            lines_list_colors = [stim_c, correct_th_c, repoke_th_c]
+            x_min = df.session.min()
+
             # CREATE REPONSES DF
             ### needed columns before the unnest
             df['responses_time'] = df.apply(lambda row: utils.create_responses_time(row), axis=1)
@@ -206,19 +219,6 @@ def intersession(df, save_path_intersesion):
             # SUBDATAFRAMES
             first_resp_df = resp_df.drop_duplicates(subset=['trial', 'session'], keep='first', inplace=False).copy()
             last_resp_df = resp_df.drop_duplicates(subset=['trial', 'session'], keep='last', inplace=False).copy()
-
-            # THRESHOLDS & CHANCE
-            stim_width = df.width.mean() / 2
-            vg_correct_th = df.loc[df.trial_type == 'VG'].correct_th.mean() / 2
-            wm_correct_th = df.loc[df.trial_type != 'VG'].correct_th.mean() / 2
-            vg_repoke_th = df.loc[df.trial_type == 'VG'].repoke_th.mean() / 2
-            wm_repoke_th = df.loc[df.trial_type != 'VG'].repoke_th.mean() / 2
-
-            vg_chance_p = utils.chance_calculation(vg_correct_th)
-            wm_chance_p = utils.chance_calculation(wm_correct_th)
-            lines_list = [stim_width, vg_correct_th, vg_repoke_th]
-            lines_list_colors = [stim_c, correct_th_c, repoke_th_c]
-            x_min = df.session.min()
 
 
             # PLOTS

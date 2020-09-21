@@ -60,13 +60,13 @@ def unnesting(df, explode):
     name = explode[0] + '_index'
     finaldf[name] = length2
 
-    for column in finaldf.columns:
-        try:
-            if set(finaldf[column]) <= {'True', 'False', 'nan'}:
-                replacing = {'True': True, 'False': False, 'nan': np.nan}
-                finaldf[column] = finaldf[column].map(replacing)
-        except:
-            pass
+    # for column in finaldf.columns:
+    #     try:
+    #         if set(finaldf[column]) <= {'True', 'False', 'nan'}:
+    #             replacing = {'True': True, 'False': False, 'nan': np.nan}
+    #             finaldf[column] = finaldf[column].map(replacing)
+    #     except:
+    #         pass
     return finaldf
 
 # BASAL WEIGHTS
