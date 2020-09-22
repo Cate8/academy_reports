@@ -263,13 +263,16 @@ def stagetraining_daily (df, save_path, date):
                       color=correct_other_c, order=ttypes)
         axes.hlines(y=[0.5, 1], xmin=0, xmax=len(ttypes) - 1, color=lines_c, linestyle=':')
         chance_list2 = chance_list.copy()
+        print(df.trial_type.unique())
+
         for idx, i in enumerate(df.trial_type.unique()):
             if idx >= 1:
-                if len(chance_list) > 1:
+                if len(chance_list) > 1 and idx > 1:
                     chance_list2.append(chance_list[1])
-                else:
+                elif len(chance_list) == 1:
                     chance_list2.append(chance_list[0])
-
+        print(chance_list)
+        print(ttypes)
         axes.fill_between(ttypes, chance_list2, 0, facecolor=lines_c, alpha=0.3)
         axes.set_xlabel('')
         utils.axes_pcent(axes, label_kwargs)
