@@ -206,23 +206,25 @@ def stagetraining_daily (df, save_path, date):
               '  /  Task: ' + str(df.task.iloc[0]) +
               '  /  Date: ' + str(date) +
               '  /  Box: ' + str(df.box.iloc[0]) +
-              '  /  Weight: ' + str(weight) + " g" +
-              '  /  Relative weight: ' + str(round(utils.relative_weights(subject, weight), 2)) + "%" +'\n')
+              '  /  Stage: ' + str(int(stage)) +
+              '  /  Substage: ' + str(int(substage)) + '\n')
 
-        s2 = ('Prob VG: ' + str(round(df.pvg.mean() * 100, 2))  +
+        s3 = ('Prob VG: ' + str(round(df.pvg.mean() * 100, 2))  +
               '  /  Prob WMI: ' + str(round(df.pwm_i.mean() * 100, 2)) +
               '  /  Prob WMDs: ' + str(round(df.pwm_ds.mean() * 100, 2)) +
               '  /  Prob WMDm: ' + str(round(df.pwm_dm.mean() * 100, 2)) +
               '  /  Prob WMDl: ' + str(round(df.pwm_dl.mean() * 100, 2)) + '\n')
 
-        s3 = ('Delay s: ' + str((df.ds.iloc[0])) +
+        s4 = ('Delay s: ' + str((df.ds.iloc[0])) +
               '  /  Delay m: ' + str((df.dm.iloc[0])) +
               '  /  Delay l: ' + str((df.dl.iloc[0])) + '\n')
 
-        s4 = ('Total trials: ' + str(int(total_trials)) +
-              '  /  Valid trials: ' + str(valid_trials) +
-              '  /  Missed trials: ' + str(missed_trials) +
-              '  /  Reward drunk: ' + str(reward_drunk) + " ul" + '\n')
+        s2 = ('Total trials: ' + str(int(total_trials)) +
+              '  /  Valids: ' + str(valid_trials) +
+              '  /  Missed: ' + str(missed_trials) +
+              '  /  Reward drunk: ' + str(reward_drunk) + " ul" +
+              '  /  Weight: ' + str(weight) + " g" +
+              '  /  Rel. weight: ' + str(round(utils.relative_weights(subject, weight), 2)) + "%" + '\n')
 
         s5 = ('Acc first poke: ' + str(int(total_acc_first_poke * 100)) + '%' +
               '  /  Acc last poke: ' + str(int(total_acc_last_poke * 100)) + "%" + '\n')
