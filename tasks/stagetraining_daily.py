@@ -226,7 +226,7 @@ def stagetraining_daily (df, save_path, date):
               '  /  Weight: ' + str(weight) + " g" +
               '  /  Rel. weight: ' + str(round(utils.relative_weights(subject, weight), 2)) + "%" + '\n')
 
-        s5 = ('Acc first poke: ' + str(int(total_acc_first_poke * 100)) + '%' +
+        s5 = ('Acc first poke: ' + str(int(total_acc_first_poke * 100)) + '%' + 
               '  /  Acc last poke: ' + str(int(total_acc_last_poke * 100)) + "%" + '\n')
 
         s6 = (total_acc_ttype +  '\n')
@@ -516,7 +516,7 @@ def stagetraining_daily (df, save_path, date):
 
         # DELAY LENGHT PLOT
         if task == "StageTraining_2B_V6" and stage == 3 and substage == 2 or task == "StageTraining_MA_V3" and stage == 3\
-                or task == "StageTraining_2B_V6" and stage == 4:
+                or task == "StageTraining_2B_V6" and stage == 4 or task == "StageTraining_2B_V7" and stage == 3:
             dtypes = df.delay_type.unique()
             dtype_colors = []
             for i in dtypes:
@@ -540,7 +540,7 @@ def stagetraining_daily (df, save_path, date):
 
 
         # STIMULUS DURATION PLOT
-        elif task == "StageTraining_2B_V5" or task == "StageTraining_2B_V6" or task == "StageTraining_MA_V3" and stage == 2:
+        elif task == "StageTraining_2B_V5" or task == "StageTraining_2B_V6" or task == "StageTraining_2B_V7" or task == "StageTraining_MA_V3" and stage == 2:
             for ttype, ttype_df in df.groupby('trial_type'):
                 if ttype == 'WM_I':
                     ttype_color = ttype_df.ttype_colors.iloc[0]
