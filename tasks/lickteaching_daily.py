@@ -12,17 +12,15 @@ lines_c = 'gray'
 def lickteaching_daily (df, save_path, date):
 
     # RELEVANT COLUMNS
-    df['trial_result'] = 'miss'
     df['colors'] = miss_c
-    df.loc[(df.STATE_Correct_first_START > 0, 'trial_result')] = 'correct'
-    df.loc[(df.STATE_Correct_first_START > 0, 'colors')] = correct_c
+    df.loc[(df.trial_result == 'correct_first', 'colors')] = correct_c
     df['lick_latency'] = df.STATE_Wait_for_reward_END - df.STATE_Wait_for_reward_START
 
     # RELEVANT VARIABLES
     total_trials = int(df.trial.iloc[-1])
-    valid_trials = (df.loc[df['trial_result'] == 'correct']).shape[0]
+    valid_trials = (df.loc[df['trial_result'] == 'correct_first']).shape[0]
     missed_trials = total_trials - valid_trials
-    reward_drunk =  valid_trials * 8
+    reward_drunk = int(df.reward_drunk.iloc[-1])
     lick_latency_mean = df.lick_latency.mean()
 
     # PAGE 1:
