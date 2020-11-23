@@ -7,6 +7,8 @@ from tasks.lickteaching_daily import lickteaching_daily
 from tasks.touchteaching_daily import touchteaching_daily
 from tasks.stagetraining_daily import stagetraining_daily
 from tasks.intersession import intersession
+import warnings
+warnings.filterwarnings('ignore')
 
 
 # MAIN
