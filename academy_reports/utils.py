@@ -72,7 +72,9 @@ def unnesting(df, explode):
 # BASAL WEIGHTS
 def relative_weights(subject, weight):
     basal_weights = {'A5': '32.68', 'A6': '31.46', 'A7': '30.40', 'A8': '31.38', 'A9': '31.65', 'A10': '27.71',
-                         'A11': '31.20', 'A12': '27.72', 'MA1': '25.33', 'MA2': '21.97', 'MA3': '24.93', 'MA4': '23.31', 'MA5': '25.28'}
+                         'A11': '31.20', 'A12': '27.72',
+                     'MA1': '25.33', 'MA2': '21.97', 'MA3': '24.93', 'MA4': '23.31', 'MA5': '25.28',
+                     'A13':'23.4', 'A14':'21.63', 'A15':'21.8', 'A16':'21.87', 'A17':'22.7', 'A18':'21.37', 'A19':'23.7', 'A20':'24.1'}
     for key, value in basal_weights.items():
         if subject == key:
             basal_weight_subj = float(value)
@@ -92,37 +94,46 @@ def compute_window(data, runningwindow):
             performance.append(round(np.mean(data[i - runningwindow:i]), 2))
     return performance
 
+
 # COLLECT ALL REPONSES TIMES IN A COLUMN
-def create_responses_time(row):
-    try:
-        result = row['STATE_Incorrect_START'].tolist().copy()
-    except (TypeError, AttributeError):
-        result = row['STATE_Incorrect_START'].copy()
-
-    items = [row['STATE_Correct_first_START'], row['STATE_Correct_other_START'], row['STATE_Punish_START']]
-
-    for item in items:
-        if not np.isnan(item):
-            result += [item]
+def create_responses_time(row, unnest):
+    if unnest == 1:
+        try:
+            result = row['STATE_Incorrect_START'].tolist().copy()
+        except (TypeError, AttributeError):
+            result = row['STATE_Incorrect_START'].copy()
+        items = [row['STATE_Correct_first_START'], row['STATE_Correct_other_START'], row['STATE_Punish_START']]
+        for item in items:
+            if not np.isnan(item):
+                result += [item]
+    else:
+        result = []
+        items = [row['STATE_Correct_first_START'], row['STATE_Correct_other_START']]
+        for item in items:
+            if not np.isnan(item):
+                result += [item]
+        result = result
 
     return result
+
 
 # RESPONSE RESULT COLUMN
-def create_reponse_result(row):
-    result = ['incorrect'] * len(row['STATE_Incorrect_START'])
-    if row['trial_result'] != 'miss' and row['trial_result'] != 'incorrect':
-        result += [row['trial_result']]
+def create_reponse_result(row, unnest):
+    if unnest == 1:
+        result = ['incorrect'] * len(row['STATE_Incorrect_START'])
+        if row['trial_result'] != 'miss' and row['trial_result'] != 'incorrect':
+            result += [row['trial_result']]
+    else:
+        result = []
+        if row['trial_result'] != 'miss' and row['trial_result'] != 'incorrect':
+            result += [row['trial_result']]
     return result
+
 
 # CREATE CSVS
 def create_csv(df, path):
     df.to_csv(path, sep=';', na_rep='nan', index=False)
 
-# CHANCE CALCULATION
-def chance_calculation(correct_th):
-    screen_size = 1440 * 0.28
-    chance = correct_th*2 / screen_size
-    return chance
 
 # PECRCENTAGE AXES
 def axes_pcent(axes, label_kwargs):
@@ -135,4 +146,8 @@ def axes_pcent(axes, label_kwargs):
     axes.set_yticks(np.arange(0, 1.1, 0.1))
     axes.set_yticklabels(['0', '', '', '', '', '50', '', '', '', '', '100'])
 
-
+# CHANCE CALCULATION
+def chance_calculation(correct_th):
+    screen_size = 1440 * 0.28
+    chance = correct_th*2 / screen_size
+    return chance
