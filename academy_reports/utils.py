@@ -151,3 +151,26 @@ def chance_calculation(correct_th):
     screen_size = 1440 * 0.28
     chance = correct_th*2 / screen_size
     return chance
+
+
+# ORDER LISTS
+def order_lists(list, type):
+    if type == 'ttypes':
+        order = ['VG', 'WM_I', 'WM_D', 'WM_Ds', 'WM_Dl']
+        c_order = ['#393b79', '#6b6ecf', '#9c9ede', '#9c9ede', '#a55194']
+    elif type == 'treslts':
+        order = ['correct_first', 'correct_other', 'punish', 'incorrect', 'miss']
+        c_order = ['green', 'limegreen', 'firebrick', 'red', 'black']
+    elif type == 'probs':
+        order = ['pvg', 'pwm_i', 'pwm_d', 'pwm_ds', 'pwm_dl']
+        c_order = ['#393b79', '#6b6ecf', '#9c9ede', '#9c9ede', '#a55194']
+
+    ordered_list = []
+    ordered_c_list = []
+
+    for idx, i in enumerate(order):
+        if i in list:
+            ordered_list.append(i)
+            ordered_c_list.append(c_order[idx])
+
+    return ordered_list, ordered_c_list

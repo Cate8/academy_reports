@@ -37,7 +37,6 @@ def stagetraining_daily (df, save_path, date):
 
     ##################### PARSE #####################
 
-
     ###### RELEVANT VARIABLES ######
     subject = df.subject.iloc[0]
     weight = df.subject_weight.iloc[0]
@@ -131,19 +130,6 @@ def stagetraining_daily (df, save_path, date):
     except:
         pass
 
-    ###### USEFUL LISTS ######
-    ttype_colors = df.ttype_colors.unique().tolist()
-    treslt_colors = df.treslt_colors.unique().tolist()
-    ttypes = df.trial_type.unique().tolist()
-    treslts = df.trial_result.unique().tolist()
-
-    #order lists
-    ttypes.sort(reverse=True)
-    if 'VG' in ttypes:
-        ttypes.insert(0, ttypes.pop())
-    treslts.sort()
-    if 'miss' in treslts:
-        treslts.append(treslts.pop())
 
 
     ###### CONVERT STRINGS TO LISTS ######
@@ -159,11 +145,6 @@ def stagetraining_daily (df, save_path, date):
             conversion_list.remove(column)
 
     conversion_list.extend(['response_x', 'response_y'])
-    # if stage == 1 and substage ==1:
-    #     try:
-    #         conversion_list.remove('response_x')
-    #     except:
-    #         pass
     df = utils.convert_strings_to_lists(df, conversion_list)
 
 
@@ -225,7 +206,13 @@ def stagetraining_daily (df, save_path, date):
     resp_df.loc[(resp_df.response_result == 'correct_other', 'rreslt_colors')] = correct_other_c
     resp_df.loc[(resp_df.response_result == 'incorrect', 'rreslt_colors')] = incorrect_c
     resp_df.loc[(resp_df.response_result == 'punish', 'rreslt_colors')] = punish_c
-    rreslt_colors = resp_df.rreslt_colors.unique().tolist()
+
+    ###### USEFUL LISTS ######
+    ttypes = df.trial_type.unique().tolist()
+    ttypes, ttypes_c = utils.order_lists(ttypes, 'ttypes')  # order lists
+    treslts = df.trial_result.unique().tolist()
+    treslts, treslts_c = utils.order_lists(treslts, 'treslts')  # order lists
+    rreslts_c = resp_df.rreslt_colors.unique().tolist()
 
 
     ######  CREATE SUBDATAFRAMES  ######
@@ -283,7 +270,7 @@ def stagetraining_daily (df, save_path, date):
             x_min = first_resp_df.stim_respwin.min()
             x_max = first_resp_df.stim_respwin.max()
             sns.lineplot(x=first_resp_df.trial, y=first_resp_df.stim_respwin, marker='o', markersize=5,
-                         ax=axes, color=ttype_colors[0])
+                         ax=axes, color=ttypes_c[0])
 
             lines = np.linspace(x_min, x_max, 4)
             axes.hlines(y=lines, xmin=min(ttype_df.trial), xmax=max(ttype_df.trial), color=lines_c,
@@ -310,9 +297,9 @@ def stagetraining_daily (df, save_path, date):
         #### PLOT 1: ACCURACY VS TRIAL INDEX
         # we use the previous defined axes
 
-        ttype_palette = sns.set_palette(ttype_colors, n_colors=len(ttype_colors)) # set the palette
+        ttype_palette = sns.set_palette(ttypes_c, n_colors=len(ttypes_c)) # set the palette
         labels = list(ttypes)
-        colors = list(ttype_colors)
+        colors = list(ttypes_c)
 
         ### trial type accuracies
         for ttype, ttype_df in first_resp_df.groupby('trial_type'):
@@ -469,7 +456,7 @@ def stagetraining_daily (df, save_path, date):
         axes.set_ylim(0, y_max)
         axes.get_legend().remove()
 
-        # # LICKPORT LATENCIES   # we look only the trial time
+        ### PLOT 8: LICKPORT LATENCIES   # we look only the trial time
         axes = plt.subplot2grid((50, 50), (31, 38), rowspan=25, colspan=13)
 
         y_max = 20
@@ -533,7 +520,7 @@ def stagetraining_daily (df, save_path, date):
             x_max = 30
 
         axes = plt.subplot2grid((50, 50), (0, 0), rowspan=42, colspan=25)
-        rreslt_palette = sns.set_palette(rreslt_colors, n_colors=len(rreslt_colors))
+        treslt_palette = sns.set_palette(rreslts_c, n_colors=len(rreslts_c))
 
         sns.scatterplot(x=resp_df.reward_time, y=resp_df.trial, color=water_c, s=20, ax=axes, label='water')
         sns.scatterplot(x=resp_df.responses_time, y=resp_df.trial, hue=resp_df.response_result,
