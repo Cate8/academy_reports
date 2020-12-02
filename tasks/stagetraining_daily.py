@@ -315,12 +315,12 @@ def stagetraining_daily (df, save_path, date):
             #label
             try:
                 prob_max = round(df.pwm_d.iloc[21], 3)
-                prob_min = round(df.pwm_d.min(), 3)
+                prob_min = round(df.pwm_d.iloc[-1], 3)
             except:
                 prob_max = round(df.pwm_ds.iloc[21], 3)
-                prob_min = round(df.pwm_ds.min(), 3)
-            label = 'Max: ' + str(prob_max) + '\n' + \
-                    'Min: ' + str(prob_min)
+                prob_min = round(df.pwm_ds.iloc[-1], 3)
+            label = 'Init: ' + str(prob_max) + '\n' + \
+                    'Final: ' + str(prob_min)
             axes.text(0.9, 1.3, label, transform=axes.transAxes, fontsize=8, verticalalignment='top',
                       bbox=dict(facecolor='white', edgecolor=lines2_c, alpha=0.5))
 
