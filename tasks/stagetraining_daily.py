@@ -55,8 +55,8 @@ def stagetraining_daily (df, save_path, date):
 
     # THRESHOLDS,  CHANCE & SCREEN BINNING
     stim_width = df.width.iloc[0] / 2
-    correct_th = df.correct_th.iloc[0] / 2
-    repoke_th = df.repoke_th.iloc[0] / 2
+    correct_th = df.correct_th.iloc[20] / 2
+    repoke_th = df.repoke_th.iloc[20] / 2
     threshold_lines = [stim_width, correct_th,repoke_th]
     threshold_lines_c = [stim_c, correct_th_c, repoke_th_c]
 
@@ -269,11 +269,11 @@ def stagetraining_daily (df, save_path, date):
 
             first_resp_df['stim_respwin'] = first_resp_df['stim_duration'] - first_resp_df['fixation_time']
             y_min = first_resp_df.stim_respwin.min()
-            y_max = first_resp_df.stim_respwin.max()
+            y_max = first_resp_df.stim_respwin.iloc[11]
             sns.lineplot(x=first_resp_df.trial, y=first_resp_df.stim_respwin, marker='o', markersize=5,
                          ax=axes, color=ttypes_c[0])
 
-            lines = np.linspace(y_min, y_max, 4)
+            lines = [0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0]
             axes.hlines(y=lines, xmin=min(ttype_df.trial), xmax=max(ttype_df.trial), color=lines_c,
                         linestyle=':', linewidth=1)
             axes.set_xlim(1, total_trials + 1)
@@ -282,10 +282,9 @@ def stagetraining_daily (df, save_path, date):
             axes.set_xlabel('')
             axes.xaxis.set_ticklabels([])
 
-            label = 'Init: ' + str(round(first_resp_df.stim_respwin.max(), 3)) + ' s\n' + \
-                    'Max: ' + str(round(first_resp_df.stim_respwin.iloc[11], 3))+ ' s\n' + \
+            label = 'Max: ' + str(round(first_resp_df.stim_respwin.iloc[11], 3))+ ' s\n' + \
                     'Min: ' + str(round(first_resp_df.stim_respwin.min(), 3)) + ' s'
-            axes.text(0.9, 1, label, transform=axes.transAxes, fontsize=8, verticalalignment='top',
+            axes.text(0.9, 1.3, label, transform=axes.transAxes, fontsize=8, verticalalignment='top',
                       bbox=dict(facecolor='white', edgecolor=lines2_c, alpha=0.5))
 
             axes.text(0.1, 0.9, s1 + s2 + s3, fontsize=8, transform=plt.gcf().transFigure) #header
@@ -357,7 +356,7 @@ def stagetraining_daily (df, save_path, date):
             linestyle.extend(['-', 'dotted'])
             label = 'First acc: ' + str(total_acc_first_poke) + '%' + '\n' + 'Last acc: ' + str(
                 total_acc_last_poke) + '%'
-            axes.text(0.85, 1.1, label, transform=axes.transAxes, fontsize=8, verticalalignment='top',
+            axes.text(0.9, 1.1, label, transform=axes.transAxes, fontsize=8, verticalalignment='top',
                       bbox=dict(facecolor='white', edgecolor=lines2_c, alpha=0.5))
 
         else: # global accuracy
@@ -384,7 +383,8 @@ def stagetraining_daily (df, save_path, date):
         x_min = -0.5
         x_max = len(ttypes) -0.5
 
-        sns.pointplot(x=first_resp_df.trial_type, y=first_resp_df.correct_bool, ax=axes, s= 100, ci=68, color='black')
+        sns.pointplot(x=first_resp_df.trial_type, y=first_resp_df.correct_bool, order=ttypes,
+                      ax=axes, s= 100, ci=68, color='black')
         if repoking_bool == True:  # add last poke
             sns.pointplot(x=last_resp_df.trial_type, y=last_resp_df.correct_bool, ax=axes, ci=68, color='black',
                           linestyles=["--"])
@@ -418,7 +418,7 @@ def stagetraining_daily (df, save_path, date):
         axes.set_xlabel('')
         axes.xaxis.set_ticklabels([])
         utils.axes_pcent(axes, label_kwargs)
-        axes.get_legend().remove()
+        # axes.get_legend().remove()
 
 
         ### PLOT 4: ERRORS VS STIMULUS POSITION
@@ -431,7 +431,7 @@ def stagetraining_daily (df, save_path, date):
         axes.fill_between(np.arange(x_min, x_max, 1), correct_th / 2, -correct_th / 2, facecolor='yellow', alpha=0.25)
         axes.set_xlabel('$Stimulus \ position\ (x_{t})\ (mm)%$', label_kwargs)
         axes.set_ylabel('Error (mm)', label_kwargs)
-        axes.get_legend().remove()
+        # axes.get_legend().remove()
 
 
         ### PLOT 5: RESPONSE COUNTS
