@@ -262,21 +262,22 @@ def stagetraining_daily (df, save_path, date):
         s3 = ('Acc global: ' + str(total_acc_first_poke) + '%' + total_acc_ttype + '\n')
 
 
-        ### PLOT 0: STIMULUS DURATION VS TTYPE (only in stage 2)
+        ### PLOT 0:
+        # STIMULUS DURATION VS TRIAL INDEX (only in stage 2)
         if stage == 2:
             axes = plt.subplot2grid((50, 50), (0, 0), rowspan=4, colspan=39)
 
             first_resp_df['stim_respwin'] = first_resp_df['stim_duration'] - first_resp_df['fixation_time']
-            x_min = first_resp_df.stim_respwin.min()
-            x_max = first_resp_df.stim_respwin.max()
+            y_min = first_resp_df.stim_respwin.min()
+            y_max = first_resp_df.stim_respwin.max()
             sns.lineplot(x=first_resp_df.trial, y=first_resp_df.stim_respwin, marker='o', markersize=5,
                          ax=axes, color=ttypes_c[0])
 
-            lines = np.linspace(x_min, x_max, 4)
+            lines = np.linspace(y_min, y_max, 4)
             axes.hlines(y=lines, xmin=min(ttype_df.trial), xmax=max(ttype_df.trial), color=lines_c,
                         linestyle=':', linewidth=1)
             axes.set_xlim(1, total_trials + 1)
-            axes.set_ylim(x_min - 0.2, x_max+ 0.2)
+            axes.set_ylim(y_min - 0.2, y_max+ 0.2)
             axes.set_ylabel('Stim dur \n (sec)')
             axes.set_xlabel('')
             axes.xaxis.set_ticklabels([])
@@ -289,6 +290,42 @@ def stagetraining_daily (df, save_path, date):
 
             axes.text(0.1, 0.9, s1 + s2 + s3, fontsize=8, transform=plt.gcf().transFigure) #header
             axes = plt.subplot2grid((50, 50), (5, 0), rowspan=7, colspan=39) #axes for the next plot
+
+        # PROBS VS TRIAL INDEX (only in stage 3)
+        elif stage == 3:
+            axes = plt.subplot2grid((50, 50), (0, 0), rowspan=4, colspan=39)
+
+            # probs calculation
+            probs = ['pvg', 'pwm_i', 'pwm_d', 'pwm_ds', 'pwm_dl']
+            for prob in probs[:]:
+                if prob not in df.columns:
+                    probs.remove(prob)
+            probs, probs_c = utils.order_lists(probs, 'probs')  # order lists
+
+            for idx, prob in enumerate(probs):
+                sns.lineplot(x=df['trial'], y=df[prob], ax=axes, color=probs_c[idx])
+                axes.hlines(y=[0, 0.5, 1], xmin=0, xmax=total_trials, color=lines_c, linestyle=':', linewidth=1)
+
+            axes.set_ylabel('Probability', label_kwargs)
+            axes.set_ylim(-0.1, 1.1)
+            axes.set_xlabel('')
+            axes.get_xaxis().set_ticks([])
+            axes.set_frame_on(False)
+
+            #label
+            try:
+                prob_max = round(df.pwm_d.iloc[21], 3)
+                prob_min = round(df.pwm_d.min(), 3)
+            except:
+                prob_max = round(df.pwm_ds.iloc[21], 3)
+                prob_min = round(df.pwm_ds.min(), 3)
+            label = 'Max: ' + str(prob_max) + '\n' + \
+                    'Min: ' + str(prob_min)
+            axes.text(0.9, 1.3, label, transform=axes.transAxes, fontsize=8, verticalalignment='top',
+                      bbox=dict(facecolor='white', edgecolor=lines2_c, alpha=0.5))
+
+            axes.text(0.1, 0.9, s1 + s2 + s3, fontsize=8, transform=plt.gcf().transFigure)  # header
+            axes = plt.subplot2grid((50, 50), (5, 0), rowspan=7, colspan=39)  # axes for the next plot
 
         else:
             axes = plt.subplot2grid((50, 50), (0, 0), rowspan=12, colspan=39)
@@ -375,7 +412,7 @@ def stagetraining_daily (df, save_path, date):
                      err_style="bars", ci=68, ax=axes)
 
         axes.hlines(y=chance_lines, xmin=x_min, xmax=x_max, color=lines_c, linestyle=':', linewidth=1)
-        axes.fill_between(np.arange(x_min, x_max, 1), chance_p, 0, facecolor=lines_c, alpha=0.3)
+        axes.fill_between(np.arange(x_min, x_max, 1), chance_p, 0, facecolor=lines2_c, alpha=0.3)
 
         # axis
         axes.set_xlabel('')
@@ -615,256 +652,5 @@ def stagetraining_daily (df, save_path, date):
         sns.despine()
         pdf.savefig()
         plt.close()
-
-
-        # # PAGE 3
-        # plt.figure(figsize=(11.7, 11.7))
-        #
-        # # ACCURACY TRIAL INDEX & TRIAL TYPE
-        # axes = plt.subplot2grid((50, 50), (0, 0), rowspan=8, colspan=50)
-        #
-        # ttype_palette = sns.set_palette(ttype_colors, n_colors=len(ttype_colors))
-        # for ttype, ttype_df in first_resp_df.groupby('trial_type'):
-        #     ttype_color = ttype_df.ttype_colors.iloc[0]
-        #     ttype_df['acc'] = utils.compute_window(ttype_df.correct_bool, 20)
-        #     a = sns.scatterplot(x=ttype_df.trial, y=ttype_df.acc, s=20, ax=axes, color=ttype_color, label=ttype)
-        #     sns.lineplot(x=ttype_df.trial, y=ttype_df.acc, ax=axes, color=ttype_color, label=ttype)
-        #
-        # axes.hlines(y=[0.5, 1], xmin=0, xmax=total_trials, color=lines_c, linestyle=':')
-        # for idx, i in enumerate(chance_list):
-        #     axes.fill_between(df.trial, chance_list[idx], 0, facecolor=lines_c_list[idx], alpha=0.3)
-        #
-        # axes.set_xlabel('')
-        # axes.set_xlim([1, total_trials + 1])
-        # utils.axes_pcent(axes, label_kwargs)
-        #
-        # colors = ttype_colors
-        # labels = df.trial_type.unique()
-        # lines = [Line2D([0], [0], color=c, marker='o', markersize=7, markerfacecolor=c) for c in colors]
-        # axes.legend(lines, labels, fontsize=8, title="Trial type", bbox_to_anchor=(1.05, 0.9), loc='center')
-        #
-        # # STD TRIAL INDEX & TRIAL TYPE
-        # axes = plt.subplot2grid((50, 50), (10, 0), rowspan=8, colspan=50)
-        #
-        # for ttype, ttype_df in first_resp_df.groupby('trial_type'):
-        #     ttype_color = ttype_df.ttype_colors.iloc[0]
-        #     ttype_df['err'] = utils.compute_window(ttype_df.abs_error_x, 20)
-        #     a = sns.scatterplot(x=ttype_df.trial, y=ttype_df.err, s=20, ax=axes, color=ttype_color, label=ttype)
-        #     sns.lineplot(x=ttype_df.trial, y=ttype_df.err, ax=axes, color=ttype_color, label=ttype)
-        #
-        # axes.hlines(y=155, xmin=0, xmax=total_trials, color=lines_c, linestyle=':')
-        # axes.set_xlabel('')
-        # axes.set_ylabel('Abs Error (mm)')
-        # axes.set_xlim([1, total_trials + 1])
-        # axes.get_legend().remove()
-        #
-        # # TRIAL TYPE PROBABILITY PROGRESSIONS // STIMULUS LENGHT PLOT // DELAY LENGHT PLOT
-        # axes = plt.subplot2grid((50, 50), (20, 0), rowspan=4, colspan=50)
-        #
-        # # DELAY LENGHT PLOT
-        # if task == "StageTraining_2B_V6" and stage == 3 and substage == 2 or task == "StageTraining_MA_V3" and stage == 3\
-        #         or task == "StageTraining_2B_V6" and stage == 4 or task == "StageTraining_2B_V7" and stage == 3:
-        #     dtypes = df.delay_type.unique()
-        #     dtype_colors = []
-        #     for i in dtypes:
-        #         if i == 'DS':
-        #             dtype_colors.append(wmds_c)
-        #         elif i == 'DM':
-        #             dtype_colors.append(wmdm_c)
-        #         elif i == 'DL':
-        #             dtype_colors.append(wmdl_c)
-        #
-        #     dtypes_palette = sns.set_palette(dtype_colors, n_colors=len(dtype_colors))
-        #     sns.lineplot(x=df.trial, y=df.delay, hue=df.delay_type, style=df.delay_type, markers=True, ax=axes)
-        #     dl_df = df.loc[df['delay_type']== 'DL']
-        #     if dl_df.shape[0] > 1:
-        #         label = 'Max: ' + str(round(dl_df.delay.max(), 2)) + ' s\n' + \
-        #                 'Min: ' + str(round(dl_df.delay.min(), 2)) + ' s'
-        #         axes.text(1, 0.9, label, transform=axes.transAxes, fontsize=8, fontweight='bold',
-        #                   verticalalignment='top')
-        #     axes.set_ylabel('Delay (sec)', label_kwargs)
-        #     axes.get_legend().remove()
-        #
-        #
-        # # STIMULUS DURATION PLOT
-        # elif task == "StageTraining_2B_V5" or task == "StageTraining_2B_V6" or task == "StageTraining_2B_V7" or task == "StageTraining_MA_V3" and stage == 2:
-        #     for ttype, ttype_df in df.groupby('trial_type'):
-        #         if ttype == 'WM_I':
-        #             ttype_color = ttype_df.ttype_colors.iloc[0]
-        #             ttype_df['stim_respwin'] = ttype_df['stim_duration'] - ttype_df['fixation_time']
-        #             sns.lineplot(x=ttype_df.trial, y=ttype_df.stim_respwin, style=ttype_df.trial_type, markers=True,
-        #                          ax=axes, color=ttype_color)
-        #             axes.hlines(y=[0.2, 0.4], xmin=min(ttype_df.trial), xmax=max(ttype_df.trial), color=lines_c,
-        #                         linestyle=':')
-        #             y_max = ttype_df.stim_respwin.max() + 0.2
-        #             axes.get_legend().remove()
-        #             label = 'Max: ' + str(round(ttype_df.stim_respwin.max(), 3)) + ' s\n' + \
-        #                     'Min: ' + str(round(ttype_df.stim_respwin.min(), 3)) + ' s'
-        #             axes.text(1, 0.9, label, transform=axes.transAxes, fontsize=8, fontweight='bold',
-        #                       verticalalignment='top')
-        #         elif ttype == 'WM_Ds':
-        #             ttype_color = ttype_df.ttype_colors.iloc[0]
-        #             sns.lineplot(x=ttype_df.trial, y=ttype_df.delay, style=ttype_df.trial_type, markers=True,
-        #                          ax=axes, color=ttype_color)
-        #             axes.get_legend().remove()
-        #
-        #     axes.set_ylim([-0.05, y_max])
-        #     axes.set_ylabel('Stim duration \n (sec)', label_kwargs)
-        #     axes.set_xlabel('Trials', label_kwargs)
-        #     axes.set_xlim([1, total_trials + 1])
-        #     axes.set_ylim()
-        #
-        # # PROBS PLOT
-        # else:
-        #     if task == "StageTraining_2B_V4":
-        #         probs_list = [df.pvg, df.pwm_i, df.pwm_ds, df.pwm_dm, df.pwm_dl]
-        #         df['pwm_d'] = df.pwm_ds + df.pwm_dm + df.pwm_dl
-        #     else:
-        #         probs_list = [df.pvg, df.pwm_i, df.pwm_ds * df.pwm_d, df.pwm_dm * df.pwm_d, df.pwm_dl * df.pwm_d]
-        #
-        #     probs_labels = ['VG', 'WM_I', 'WM_Ds', 'WM_Dm', 'WM_Dl']
-        #     probs_colors = [vg_c, wmi_c, wmds_c, wmdm_c, wmdl_c]
-        #
-        #     for idx, prob in enumerate(probs_list):
-        #         sns.lineplot(x=df.trial, y=prob, ax=axes, color=probs_colors[idx])
-        #         sns.scatterplot(x=df.trial, y=prob, ax=axes, color=probs_colors[idx], label=probs_labels[idx], s=15)
-        #
-        #     axes.set_xlabel('Trials', label_kwargs)
-        #     axes.set_ylabel('Prob \n appearance', label_kwargs)
-        #     axes.set_ylim(-0.1, 1.1)
-        #     axes.set_xlim([1, total_trials + 1])
-        #     axes.get_legend().remove()
-        #
-        #
-        # # RESPONSES HISTOGRAMS
-        # axes_loc = [0, 11, 21, 31, 41]
-        # for axes_idx, ttype in enumerate(ttypes):
-        #     subset = first_resp_df.loc[first_resp_df['trial_type'] == ttype]
-        #     axes = plt.subplot2grid((50, 50), (32, axes_loc[axes_idx]), rowspan=7, colspan=9)
-        #     axes.set_title(ttype, fontsize=11, fontweight='bold')
-        #     color = subset.ttype_colors.unique()
-        #
-        #     sns.distplot(subset.response_x, kde=False, bins=bins_resp, color=color, ax=axes,
-        #                  hist_kws={'alpha': 0.9})
-        #     sns.distplot(subset.x, kde=False, bins=bins_resp, color=lines2_c, ax=axes,
-        #                  hist_kws={'alpha': 0.4})
-        #     axes.set_xlabel('$Responses\ (r_{t})\ (mm)%$', label_kwargs)
-        #     axes.set_ylabel('')
-        #     if ttype == 'VG':
-        #         axes.set_ylabel('Nº of touches', label_kwargs)
-        #     axes_idx += 1
-        #
-        #
-        # #ERRORS HISTOGRAMS
-        # for axes_idx, ttype in enumerate(ttypes):
-        #     subset = first_resp_df.loc[first_resp_df['trial_type'] == ttype]
-        #     axes = plt.subplot2grid((50, 50), (42, axes_loc[axes_idx]), rowspan=7, colspan=9)
-        #     color = subset.ttype_colors.unique()
-        #     correct_th = (subset.correct_th.unique())/2
-        #
-        #     sns.distplot(subset.error_x, kde=False, bins=bins_err, color=color, ax=axes,
-        #                  hist_kws={'alpha': 0.9})
-        #     # vertical lines
-        #     for idx, line in enumerate(all_lines):
-        #         axes.axvline(x=line, color=all_colors[idx], linestyle=':', linewidth=1)
-        #     axes.axvspan(-stim_width, stim_width, color=stim_c, alpha=0.1)
-        #
-        #     axes.set_xlabel('$Errors\ (r_{t}-x_{t})\ (mm)%$', label_kwargs)
-        #     axes.set_ylabel('')
-        #     if ttype == 'VG':
-        #         axes.set_ylabel('Nº of touches', label_kwargs)
-        # sns.despine()
-        #
-        #
-        # # SAVING AND CLOSING PAGE
-        # pdf.savefig()
-        # plt.close()
-        #
-        # # PAGE 4
-        # plt.figure(figsize=(11.7, 11.7))
-        #
-        #
-        # # ACCURACY STIMULUS POSITION & TRIAL TYPE
-        # #first poke
-        # axes = plt.subplot2grid((50, 50), (0, 0), rowspan=9, colspan=14)
-        # ttype_palette = sns.set_palette(ttype_colors, n_colors=len(ttype_colors))
-        #
-        # first_resp_df['xt_bins'] = pd.cut(first_resp_df.x, bins=bins_resp, labels=False, include_lowest=True)
-        # x_ax_ticks = list(np.linspace(-0.5, 4.5, 5))
-        #
-        # sns.pointplot(x='xt_bins', y="correct_bool", data=first_resp_df, hue='trial_type', s=3)
-        # axes.hlines(y=[0.5, 1], xmin=min(x_ax_ticks), xmax=max(x_ax_ticks), color=lines_c, linestyle=':')
-        # for idx, i in enumerate(chance_list):
-        #     axes.fill_between(x_ax_ticks, chance_list[idx], 0, facecolor=lines_c_list[idx], alpha=0.3)
-        #
-        # axes.set_xticks(x_ax_ticks)
-        # axes.set_xticklabels(['0', '100', '200', '300', '400'])
-        # axes.set_xlabel('$Stimulus position\ (x_{t})\ (mm)%$', label_kwargs)
-        # utils.axes_pcent(axes, label_kwargs)
-        # axes.set_title('First poke', fontsize=11, fontweight='bold')
-        # axes.get_legend().remove()
-        #
-        # #last poke
-        # axes = plt.subplot2grid((50, 50), (0, 15), rowspan=9, colspan=14)
-        # last_resp_df['xt_bins'] = pd.cut(last_resp_df.x, bins=bins_resp, labels=False, include_lowest=True)
-        #
-        # sns.pointplot(x='xt_bins', y="correct_bool", data=last_resp_df, hue='trial_type', s=3)
-        # axes.hlines(y=[0.5, 1], xmin=min(x_ax_ticks), xmax=max(x_ax_ticks), color=lines_c, linestyle=':')
-        # for idx, i in enumerate(chance_list):
-        #     axes.fill_between(x_ax_ticks, chance_list[idx], 0, facecolor=lines_c_list[idx], alpha=0.3)
-        #
-        # axes.set_xticks(x_ax_ticks)
-        # axes.set_xticklabels(['0', '100', '200', '300', '400'])
-        # axes.set_xlabel('$Stimulus position\ (x_{t})\ (mm)%$', label_kwargs)
-        # utils.axes_pcent(axes, label_kwargs)
-        # axes.set_ylabel('')
-        # axes.yaxis.set_ticklabels([])
-        # axes.set_title('Last poke', fontsize=11, fontweight='bold')
-        # axes.get_legend().remove()
-        #
-        # # ERROR VS STIMULUS POSITION
-        # axes = plt.subplot2grid((50, 50), (0, 33), rowspan=9, colspan=17)
-        #
-        # sns.pointplot(x='xt_bins', y="error_x", data=first_resp_df, hue='trial_type', s=3, ax=axes)
-        # axes.hlines(y=[-stim_width, stim_width], xmin=min(x_ax_ticks), xmax=max(x_ax_ticks), color=stim_c, linestyle=':')
-        # axes.fill_between(x_ax_ticks, stim_width, -stim_width, facecolor=stim_c, alpha=0.1)
-        #
-        # axes.set_xticks(x_ax_ticks)
-        # axes.set_xticklabels(['0', '100', '200', '300', '400'])
-        # axes.set_title('First poke', fontsize=11, fontweight='bold')
-        # axes.set_xlabel('$Stimulus position\ (x_{t})\ (mm)%$', label_kwargs)
-        # axes.set_ylabel('$Error\ (r_{t}\ -\ x_{t})\ (mm)$', label_kwargs)
-        # axes.get_legend().remove()
-        #
-        # sns.despine()
-        #
-        # # SAVING AND CLOSING PAGE
-        # pdf.savefig()
-        # plt.close()
-
-        ##### other plots #########
-
-
-
-
-        ### STD TRIAL TYPE
-        # axes = plt.subplot2grid((50, 50), (15, 26), rowspan=12, colspan=25)
-        #
-        # sns.pointplot(x=first_resp_df.trial_type, y=first_resp_df.error_x, s=20, ax=axes,
-        #               color=correct_first_c, order=ttypes, estimator=np.std)
-        # sns.pointplot(x=last_resp_df.trial_type, y=last_resp_df.error_x, s=20, ax=axes,
-        #               color=correct_other_c, order=ttypes, estimator=np.std)
-        # axes.hlines(y=[stim_width], xmin=0, xmax=len(ttypes) - 1, color=stim_c, linestyle=':')
-        #
-        # for th in threshold_list:
-        #     axes.hlines(y=th, xmin=0, xmax=len(ttypes) - 1, color=correct_first_c, linestyle=':')
-        # axes.hlines(y=[vg_repoke_th], xmin=0, xmax=len(ttypes) - 1, color=repoke_th_c, linestyle=':')
-        # axes.fill_between(ttypes, stim_width, 0, facecolor=stim_c, alpha=0.2)  # chance
-        # axes.fill_between(ttypes, 160, 155, facecolor=lines_c, alpha=0.3) #chance
-        #
-        # axes.set_xlabel('')
-        # axes.set_ylabel('STD (mm)', label_kwargs)
-        #
-        #
 
         print('New daily report completed successfully')

@@ -227,9 +227,9 @@ def intersession(df, save_path_intersesion):
             sns.lineplot(x=df.session, y=df.relative_weights, hue=df.task, style=df.task,
                          markers=True, ax=axes, palette=['black']* len(grouped_df.task.unique()))
 
-            axes.hlines(y=[85], xmin=x_min, xmax=total_sessions, color=lines_c, linestyle=':', linewidth=1)
+            axes.hlines(y=[85, 100], xmin=x_min, xmax=total_sessions, color=lines_c, linestyle=':', linewidth=1)
             axes.set_ylabel('Rel. \n Weight (%)', label_kwargs)
-            axes.set_ylim(75, 95)
+            axes.set_ylim(80, 120)
             axes.set_xlabel('')
             axes.get_xaxis().set_ticks([])
             axes.get_legend().remove()
