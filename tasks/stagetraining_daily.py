@@ -282,7 +282,11 @@ def stagetraining_daily (df, save_path, date):
             axes.set_xlabel('')
             axes.xaxis.set_ticklabels([])
 
-            label = 'Max: ' + str(round(first_resp_df.stim_respwin.iloc[11], 3))+ ' s\n' + \
+            try:
+                stim_max = round(first_resp_df.stim_respwin.iloc[21], 3)
+            except:
+                stim_max = round(first_resp_df.stim_respwin.iloc[0], 3)
+            label = 'Max: ' + str(stim_max)+ ' s\n' + \
                     'Min: ' + str(round(first_resp_df.stim_respwin.min(), 3)) + ' s'
             axes.text(0.9, 1.3, label, transform=axes.transAxes, fontsize=8, verticalalignment='top',
                       bbox=dict(facecolor='white', edgecolor=lines2_c, alpha=0.5))
