@@ -269,7 +269,8 @@ def stagetraining_daily (df, save_path, date):
 
             first_resp_df['stim_respwin'] = first_resp_df['stim_duration'] - first_resp_df['fixation_time']
             y_min = first_resp_df.stim_respwin.min()
-            y_max = first_resp_df.stim_respwin.iloc[11]
+            y_max = first_resp_df.loc[((first_resp_df['trial']> 20) & (first_resp_df['trial_type']== 'WM_I')), :]
+            y_max= y_max.stim_respwin.max()
             sns.lineplot(x=first_resp_df.trial, y=first_resp_df.stim_respwin, marker='o', markersize=5,
                          ax=axes, color=ttypes_c[0])
 
