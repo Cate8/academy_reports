@@ -55,8 +55,12 @@ def stagetraining_daily (df, save_path, date):
 
     # THRESHOLDS,  CHANCE & SCREEN BINNING
     stim_width = df.width.iloc[0] / 2
-    correct_th = df.correct_th.iloc[20] / 2
-    repoke_th = df.repoke_th.iloc[20] / 2
+    try:
+        correct_th = df.correct_th.iloc[20] / 2
+        repoke_th = df.repoke_th.iloc[20] / 2
+    except:
+        correct_th = df.correct_th.iloc[0] / 2
+        repoke_th = df.repoke_th.iloc[0] / 2
     threshold_lines = [stim_width, correct_th,repoke_th]
     threshold_lines_c = [stim_c, correct_th_c, repoke_th_c]
 
@@ -118,6 +122,11 @@ def stagetraining_daily (df, save_path, date):
 
     # separate DS DL (when required)
     try:
+        if (df['trial_type'] == 'WM_D').any():
+            df.loc[(df.trial_type == 'WM_D', 'ttype_colors')] = wmds_c
+    except:
+        pass
+    try:
         if (df['pwm_ds'] > 0).any():
             df.loc[((df.trial_type == 'WM_D') & (df.delay_type == 'DS')), 'trial_type'] = 'WM_Ds'
             df.loc[(df.trial_type == 'WM_Ds', 'ttype_colors')] = wmds_c
@@ -169,14 +178,19 @@ def stagetraining_daily (df, save_path, date):
             df['STATE_Stimulus_offset_START'] = df['STATE_Stimulus_offset_START'].apply(lambda x: x[-1])
 
         df['stim_duration'] = 0
-        df.loc[df['trial_type'] == 'VG', 'stim_duration'] = df['response_window_end'] - df['STATE_Fixation_START']
-        df.loc[df['trial_type'] == 'WM_I', 'stim_duration'] = df['STATE_Stimulus_offset_START'] - df[
-            'STATE_Fixation_START']
-        df.loc[df['trial_type'] == 'WM_D', 'stim_duration'] = df['STATE_Stimulus_offset_START'] - df[
-            'STATE_Fixation_START']
-
         df['fixation_time'] = df['STATE_Fixation_END'] - df['STATE_Fixation_START']
+        if task == 'StageTraining_4B_V1':
+            df.loc[df['trial_type'] == 'VG', 'stim_duration'] = df['response_window_end'] - df['STATE_Fixation_START']
+            df.loc[df['trial_type'] == 'WM_I', 'stim_duration'] = df['STATE_Stimulus_offset_START'] - df[
+                'STATE_Fixation_START']
+            df.loc[df['trial_type'] == 'WM_D', 'stim_duration'] = df['STATE_Stimulus_offset_START'] - df[
+                'STATE_Fixation_START']
 
+        else:
+            df.loc[df['trial_type'] == 'VG', 'stim_duration'] = df['response_window_end'] - df['STATE_Fixation_START']
+            df.loc[df['trial_type'] == 'WM_I', 'stim_duration'] = df['STATE_Fixation_END'] - df['STATE_Fixation_START'] \
+                                        + df['rw_stim_dur']
+            df.loc[df['trial_type'] == 'WM_D', 'stim_duration'] = df['wm_stim_dur']
 
     ###### CREATE RESPONSES DF ######
 
@@ -267,12 +281,18 @@ def stagetraining_daily (df, save_path, date):
         if stage == 2:
             axes = plt.subplot2grid((50, 50), (0, 0), rowspan=4, colspan=39)
 
-            first_resp_df['stim_respwin'] = first_resp_df['stim_duration'] - first_resp_df['fixation_time']
-            y_min = first_resp_df.stim_respwin.min()
-            y_max = first_resp_df.loc[((first_resp_df['trial']> 20) & (first_resp_df['trial_type']== 'WM_I')), :]
-            y_max= y_max.stim_respwin.max()
-            sns.lineplot(x=first_resp_df.trial, y=first_resp_df.stim_respwin, marker='o', markersize=5,
-                         ax=axes, color=ttypes_c[0])
+            if '4B' in task and stage==2 and substage ==2:
+                subset = first_resp_df.loc[first_resp_df['trial_type'] == 'WM_D']
+                color = wmds_c
+            else:
+                subset = first_resp_df.loc[first_resp_df['trial_type'] == 'WM_I']
+                subset['stim_duration'] = subset['stim_duration'] - subset['fixation_time'] # ALIGN TO RW ONSET
+                color = wmi_c
+
+            y_min = subset.stim_duration.min()
+            y_max = subset.loc[subset['trial']> 25]
+            y_max= y_max.stim_duration.max()
+            sns.lineplot(x=subset.trial, y=subset.stim_duration, marker='o', markersize=5, ax=axes, color=color)
 
             lines = [0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0]
             axes.hlines(y=lines, xmin=min(ttype_df.trial), xmax=max(ttype_df.trial), color=lines_c,
@@ -283,12 +303,8 @@ def stagetraining_daily (df, save_path, date):
             axes.set_xlabel('')
             axes.xaxis.set_ticklabels([])
 
-            try:
-                stim_max = round(first_resp_df.stim_respwin.iloc[21], 3)
-            except:
-                stim_max = round(first_resp_df.stim_respwin.iloc[0], 3)
-            label = 'Max: ' + str(stim_max)+ ' s\n' + \
-                    'Min: ' + str(round(first_resp_df.stim_respwin.min(), 3)) + ' s'
+            label = 'Max: ' + str(round(y_max, 3))+ ' s\n' + \
+                    'Min: ' + str(round(y_min, 3))+ ' s' #str(round(y_min), 3)
             axes.text(0.9, 1.3, label, transform=axes.transAxes, fontsize=8, verticalalignment='top',
                       bbox=dict(facecolor='white', edgecolor=lines2_c, alpha=0.5))
 
@@ -345,7 +361,9 @@ def stagetraining_daily (df, save_path, date):
 
         ### trial type accuracies
         for ttype, ttype_df in first_resp_df.groupby('trial_type'):
+            print(ttype)
             ttype_color = ttype_df.ttype_colors.iloc[0]
+            print(ttype_color)
             ttype_df['acc'] = utils.compute_window(ttype_df.correct_bool, 20)
             sns.lineplot(x=ttype_df.trial, y=ttype_df.acc, ax=axes, color=ttype_color, marker='o', markersize=5)
 
@@ -423,7 +441,6 @@ def stagetraining_daily (df, save_path, date):
         axes.set_xlabel('')
         axes.xaxis.set_ticklabels([])
         utils.axes_pcent(axes, label_kwargs)
-        # axes.get_legend().remove()
 
 
         ### PLOT 4: ERRORS VS STIMULUS POSITION
