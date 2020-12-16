@@ -168,7 +168,7 @@ def stagetraining_daily (df, save_path, date):
     df['lick_latency'] = df['reward_time'] - df['response_window_end']
 
     # CALCULATE STIMULUS DURATION & FIXATION (when required)
-    if 'stim_duration' not in df.columns:
+    if '4B' in task:
         # grab last item of list (if exists)
         if type(df['STATE_Fixation_START'].iloc[0]) == list:
             df['STATE_Fixation_START'] = df['STATE_Fixation_START'].apply(lambda x: x[-1])
@@ -176,17 +176,16 @@ def stagetraining_daily (df, save_path, date):
             df['STATE_Fixation_END'] = df['STATE_Fixation_END'].apply(lambda x: x[-1])
         if type(df['STATE_Stimulus_offset_START'].iloc[0]) == list:
             df['STATE_Stimulus_offset_START'] = df['STATE_Stimulus_offset_START'].apply(lambda x: x[-1])
+        df['fixation_time'] = df['STATE_Fixation_END'] - df['STATE_Fixation_START']
 
         df['stim_duration'] = 0
-        df['fixation_time'] = df['STATE_Fixation_END'] - df['STATE_Fixation_START']
         if task == 'StageTraining_4B_V1':
             df.loc[df['trial_type'] == 'VG', 'stim_duration'] = df['response_window_end'] - df['STATE_Fixation_START']
             df.loc[df['trial_type'] == 'WM_I', 'stim_duration'] = df['STATE_Stimulus_offset_START'] - df[
                 'STATE_Fixation_START']
             df.loc[df['trial_type'] == 'WM_D', 'stim_duration'] = df['STATE_Stimulus_offset_START'] - df[
                 'STATE_Fixation_START']
-
-        else:
+        elif task == 'StageTraining_4B_V2':
             df.loc[df['trial_type'] == 'VG', 'stim_duration'] = df['response_window_end'] - df['STATE_Fixation_START']
             df.loc[df['trial_type'] == 'WM_I', 'stim_duration'] = df['STATE_Fixation_END'] - df['STATE_Fixation_START'] \
                                         + df['rw_stim_dur']
@@ -361,9 +360,7 @@ def stagetraining_daily (df, save_path, date):
 
         ### trial type accuracies
         for ttype, ttype_df in first_resp_df.groupby('trial_type'):
-            print(ttype)
             ttype_color = ttype_df.ttype_colors.iloc[0]
-            print(ttype_color)
             ttype_df['acc'] = utils.compute_window(ttype_df.correct_bool, 20)
             sns.lineplot(x=ttype_df.trial, y=ttype_df.acc, ax=axes, color=ttype_color, marker='o', markersize=5)
 
