@@ -23,7 +23,8 @@ def main():
 
         #sort, only analyze general csvs
         subject = os.path.basename(path)
-        if len(subject) < 8:
+        print(subject)
+        if len(subject) <= 8:
             df = pd.read_csv(path, sep=';')
             dfs.append(df)
 
