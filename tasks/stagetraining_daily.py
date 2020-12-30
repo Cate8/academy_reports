@@ -283,10 +283,17 @@ def stagetraining_daily (df, save_path, date):
             if '4B' in task and stage==2 and substage ==2:
                 subset = first_resp_df.loc[first_resp_df['trial_type'] == 'WM_D']
                 color = wmds_c
+                # calculate real delay (from stimulus offset to end of corridor cross
+                first_resp_df['real_delay'] = np.nan
+                first_resp_df.loc[first_resp_df['trial_type'] == 'WM_D', 'real_delay'] = \
+                    first_resp_df['fixation_time'] - first_resp_df['wm_stim_dur']
+                first_resp_df.loc[first_resp_df['real_delay'] < 0, 'real_delay'] = 0  # correct for longer stimulus
+                label = 'Real D: ' + str(round(first_resp_df.real_delay.mean(), 2)) + ' s\n'
             else:
                 subset = first_resp_df.loc[first_resp_df['trial_type'] == 'WM_I']
                 subset['stim_duration'] = subset['stim_duration'] - subset['fixation_time'] # ALIGN TO RW ONSET
                 color = wmi_c
+                label = ''
 
             y_min = subset.stim_duration.min()
             y_max = subset.loc[subset['trial']> 25]
@@ -302,7 +309,7 @@ def stagetraining_daily (df, save_path, date):
             axes.set_xlabel('')
             axes.xaxis.set_ticklabels([])
 
-            label = 'Max: ' + str(round(y_max, 3))+ ' s\n' + \
+            label = label + 'Max: ' + str(round(y_max, 3))+ ' s\n' + \
                     'Min: ' + str(round(y_min, 3))+ ' s' #str(round(y_min), 3)
             axes.text(0.9, 1.3, label, transform=axes.transAxes, fontsize=8, verticalalignment='top',
                       bbox=dict(facecolor='white', edgecolor=lines2_c, alpha=0.5))
