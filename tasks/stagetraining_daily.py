@@ -310,7 +310,7 @@ def stagetraining_daily (df, save_path, date):
             axes.xaxis.set_ticklabels([])
 
             label = label + 'Max: ' + str(round(y_max, 3))+ ' s\n' + \
-                    'Min: ' + str(round(y_min, 3))+ ' s' #str(round(y_min), 3)
+                    'Min: ' + str(round(y_min, 3))+ ' s'
             axes.text(0.9, 1.3, label, transform=axes.transAxes, fontsize=8, verticalalignment='top',
                       bbox=dict(facecolor='white', edgecolor=lines2_c, alpha=0.5))
 
@@ -352,6 +352,34 @@ def stagetraining_daily (df, save_path, date):
 
             axes.text(0.1, 0.9, s1 + s2 + s3, fontsize=8, transform=plt.gcf().transFigure)  # header
             axes = plt.subplot2grid((50, 50), (5, 0), rowspan=7, colspan=39)  # axes for the next plot
+
+        # DELAY LENGTH PLOT
+        elif stage == 4:
+            axes = plt.subplot2grid((50, 50), (0, 0), rowspan=4, colspan=39)
+            # DELAY LENGTH PLOT
+            subset = df.loc[df['trial_type'] == 'WM_Dl']
+            sns.lineplot(x=subset.trial, y=subset.dl, marker= 'o', markersize=5, ax=axes, color=wmdl_c)
+            lines = [1.4, 1.2, 1, 0.8, 0.6, 0.4, 0.2, 0]
+            axes.hlines(y=lines, xmin=min(df.trial), xmax=max(df.trial), color=lines_c, linestyle=':', linewidth=1)
+
+            y_min = subset.dl.min()
+            y_max = subset.dl.max()
+
+            axes.set_xlim(1, total_trials + 1)
+            axes.set_ylim(y_min - 0.2, y_max + 0.2)
+            axes.set_ylabel('Delay len \n (sec)')
+            axes.set_xlabel('')
+            axes.xaxis.set_ticklabels([])
+
+            label = 'Max: ' + str(round(y_max, 3)) + ' s\n' + \
+                    'Min: ' + str(round(y_min, 3)) + ' s'
+            axes.text(0.9, 1.3, label, transform=axes.transAxes, fontsize=8, verticalalignment='top',
+                      bbox=dict(facecolor='white', edgecolor=lines2_c, alpha=0.5))
+
+            axes.text(0.1, 0.9, s1 + s2 + s3, fontsize=8, transform=plt.gcf().transFigure)  # header
+            axes = plt.subplot2grid((50, 50), (5, 0), rowspan=7, colspan=39)  # axes for the next plot
+
+
 
         else:
             axes = plt.subplot2grid((50, 50), (0, 0), rowspan=12, colspan=39)
