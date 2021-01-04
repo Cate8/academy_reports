@@ -468,6 +468,8 @@ def stagetraining_daily (df, save_path, date):
 
         axes.hlines(y=chance_lines, xmin=x_min, xmax=x_max, color=lines_c, linestyle=':', linewidth=1)
         axes.fill_between(np.arange(x_min, x_max, 1), chance_p, 0, facecolor=lines2_c, alpha=0.3)
+        if len(first_resp_df.trial_type.unique()) > 1:
+            axes.get_legend().remove()
 
         # axis
         axes.set_xlabel('')
@@ -485,7 +487,8 @@ def stagetraining_daily (df, save_path, date):
         axes.fill_between(np.arange(x_min, x_max, 1), correct_th / 2, -correct_th / 2, facecolor='yellow', alpha=0.25)
         axes.set_xlabel('$Stimulus \ position\ (x_{t})\ (mm)%$', label_kwargs)
         axes.set_ylabel('Error (mm)', label_kwargs)
-        # axes.get_legend().remove()
+        if len(first_resp_df.trial_type.unique()) > 1:
+            axes.get_legend().remove()
 
 
         ### PLOT 5: RESPONSE COUNTS
