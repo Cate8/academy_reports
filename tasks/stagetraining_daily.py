@@ -48,7 +48,8 @@ def stagetraining_daily (df, save_path, date):
     stage = df.stage.iloc[0]
     substage = df.substage.iloc[0]
     try:
-        mask = df.mask.iloc[0]
+        df.rename(columns={"mask": "mask_holes"}, inplace=True)  # rename because its name coincides with a function
+        mask = int(df.mask_holes.iloc[0])
     except:
         mask = 3
 
@@ -340,12 +341,11 @@ def stagetraining_daily (df, save_path, date):
 
             #label
             try:
-                prob_max = round(df.pwm_ds.iloc[21], 3)
-                prob_min = round(df.pwm_ds.iloc[-1], 3)
-            except:
                 prob_max = round(df.pwm_d.iloc[21], 3)
                 prob_min = round(df.pwm_d.iloc[-1], 3)
-
+            except:
+                prob_max = round(df.pwm_ds.iloc[21], 3)
+                prob_min = round(df.pwm_ds.iloc[-1], 3)
             label = 'Init: ' + str(prob_max) + '\n' + \
                     'Final: ' + str(prob_min)
             axes.text(0.9, 1.3, label, transform=axes.transAxes, fontsize=8, verticalalignment='top',

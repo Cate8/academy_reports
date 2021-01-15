@@ -240,22 +240,22 @@ def intersession(df, save_path_intersesion):
 
             ### PLOT 3:  RESPONSE LATENCIES
             axes = plt.subplot2grid((50, 50), (6, 0), rowspan=5, colspan=24)
-            ymax= 30
+            ymax= 20
             treslt_palette = sns.set_palette(treslts_c, n_colors=len(treslts_c))
             axes.set_title('Responses', fontsize=10, fontweight='bold')
-            sns.lineplot(x=resp_df.session, y=resp_df.resp_latency, hue=resp_df.trial_result, style=resp_df.task,
-                         markers=True, ax=axes, estimator=np.median, palette = treslt_palette)
+            sns.lineplot(x=first_resp_df.session, y=first_resp_df.resp_latency, hue=first_resp_df.trial_result, style=resp_df.task,
+                         marker='o', ax=axes, estimator=np.median, palette = treslt_palette)
 
             axes.set_ylabel('Latency (sec)', label_kwargs)
             axes.set_ylim(0, ymax)
             axes.get_legend().remove()
 
             ## PLOT 4:  LICK LATENCIES
-            ymax = 15
+            ymax = 10
             axes = plt.subplot2grid((50, 50), (6, 27), rowspan=5, colspan=24)
             axes.set_title('Licks', fontsize=10, fontweight='bold')
-            sns.lineplot(x=df.session, y=df.lick_latency, hue=resp_df.trial_result, style=resp_df.task,
-                         markers=True, ax=axes, estimator=np.median, palette=treslt_palette)
+            sns.lineplot(x=df.session, y=df.lick_latency, hue=df.trial_result, marker='o', ax=axes,
+                         estimator=np.median, palette=treslt_palette)
 
             axes.set_ylabel('')
             axes.set_ylim(0, ymax)
@@ -319,10 +319,13 @@ def intersession(df, save_path_intersesion):
             ttypes, ttypes_c = utils.order_lists(ttypes, 'ttypes')  # order lists
 
             # assuming 3 hole mask to change
-            l_edge = min(x_positions) - 30
-            r_edge = max(x_positions) + 30
-            bins_resp = np.linspace(l_edge, r_edge, 4)
-            bins_err = np.linspace(-r_edge, r_edge, 7)
+            l_edge = min(x_positions) - 40
+            r_edge = max(x_positions) + 40
+
+            df.rename(columns={"mask": "mask_holes"}, inplace=True) #rename because its name coincides with a function
+            mask = int(df.mask_holes.iloc[-1])
+            bins_resp = np.linspace(l_edge, r_edge, mask + 1)
+            bins_err = np.linspace(-r_edge, r_edge, mask * 2 + 1)  # no està clar
 
 
             ### PLOT 7: ACC TRIAL TYPE
@@ -358,13 +361,19 @@ def intersession(df, save_path_intersesion):
 
             ### PLOT 8:  RESPONSE COUNTS SORTED BY STIMULUS POSITION
             side_colors = ['lightseagreen', 'bisque', 'orange']
-            side_palette = sns.set_palette(side_colors, n_colors=len(side_colors))  # palette creation
             axes_loc = [33, 39, 45]
+            rowspan = 5
+            if mask == 5:
+                side_colors.insert(0, 'darkcyan')
+                side_colors.append('darkorange')
+                axes_loc = [33, 36, 39, 42, 45]
+                rowspan = 3
+            side_palette = sns.set_palette(side_colors, n_colors=len(side_colors))  # palette creation
 
             first_resp_week['rt_bins'] = pd.cut(first_resp_week.response_x, bins=bins_resp, labels=x_positions,
                                               include_lowest=True)
             for idx in range(len(x_positions)):
-                axes = plt.subplot2grid((50, 50), (axes_loc[idx], 0), rowspan=5, colspan=36)
+                axes = plt.subplot2grid((50, 50), (axes_loc[idx], 0), rowspan=rowspan, colspan=36)
                 subset = first_resp_week.loc[first_resp_week['x'] == x_positions[idx]]
 
                 sns.countplot(subset.session, hue =subset.rt_bins, ax=axes, palette=side_colors)
