@@ -75,8 +75,8 @@ def stagetraining_daily (df, save_path, date):
         #binning
         x_positions = df.x.unique().tolist()
         x_positions.sort()
-        l_edge = int(min(x_positions) - correct_th / 2)
-        r_edge = int(max(x_positions) + correct_th / 2)
+        l_edge = int(min(x_positions) - correct_th)
+        r_edge = int(max(x_positions) + correct_th)
         bins_resp = np.linspace(l_edge, r_edge, mask + 1)
         bins_err = np.linspace(-r_edge, r_edge, mask*2 + 1) # no està clar
 
@@ -332,7 +332,6 @@ def stagetraining_daily (df, save_path, date):
             for idx, prob in enumerate(probs):
                 sns.lineplot(x=df['trial'], y=df[prob], ax=axes, color=probs_c[idx])
                 axes.hlines(y=[0, 0.5, 1], xmin=0, xmax=total_trials, color=lines_c, linestyle=':', linewidth=1)
-
             axes.set_ylabel('Probability', label_kwargs)
             axes.set_ylim(-0.1, 1.1)
             axes.set_xlabel('')
@@ -341,11 +340,13 @@ def stagetraining_daily (df, save_path, date):
 
             #label
             try:
-                prob_max = round(df.pwm_d.iloc[21], 3)
-                prob_min = round(df.pwm_d.iloc[-1], 3)
-            except:
                 prob_max = round(df.pwm_ds.iloc[21], 3)
                 prob_min = round(df.pwm_ds.iloc[-1], 3)
+
+            except:
+                prob_max = round(df.pwm_d.iloc[21], 3)
+                prob_min = round(df.pwm_d.iloc[-1], 3)
+
             label = 'Init: ' + str(prob_max) + '\n' + \
                     'Final: ' + str(prob_min)
             axes.text(0.9, 1.3, label, transform=axes.transAxes, fontsize=8, verticalalignment='top',
