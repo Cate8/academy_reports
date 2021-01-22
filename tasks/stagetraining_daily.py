@@ -395,7 +395,7 @@ def stagetraining_daily (df, save_path, date):
         labels = list(ttypes)
         colors = list(ttypes_c)
 
-        ### trial type accuracies
+        ### trial type accuracies######
         for ttype, ttype_df in first_resp_df.groupby('trial_type'):
             ttype_color = ttype_df.ttype_colors.iloc[0]
             ttype_df['acc'] = utils.compute_window(ttype_df.correct_bool, 20)
