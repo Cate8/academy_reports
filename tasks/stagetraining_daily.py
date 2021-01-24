@@ -152,7 +152,8 @@ def stagetraining_daily (df, save_path, date):
         try:
             df[column].str.contains(',')  # means that contains multiple values
         except:  # remove from conversion list
-            conversion_list.remove(column)
+            if column != 'STATE_Incorrect_START': # convert incorrects to list always if no crash
+                conversion_list.remove(column)
 
     conversion_list.extend(['response_x', 'response_y'])
     df = utils.convert_strings_to_lists(df, conversion_list)
