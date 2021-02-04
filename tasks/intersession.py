@@ -244,7 +244,7 @@ def intersession(df, save_path_intersesion):
             treslt_palette = sns.set_palette(treslts_c, n_colors=len(treslts_c))
             axes.set_title('Responses', fontsize=10, fontweight='bold')
             sns.lineplot(x=first_resp_df.session, y=first_resp_df.resp_latency, hue=first_resp_df.trial_result, style=resp_df.task,
-                         marker='o', ax=axes, estimator=np.median, palette = treslt_palette)
+                         marker='o', ax=axes, estimator=np.median, palette = treslt_palette, ci=None)
 
             axes.set_ylabel('Latency (sec)', label_kwargs)
             axes.set_ylim(0, ymax)
@@ -255,7 +255,7 @@ def intersession(df, save_path_intersesion):
             axes = plt.subplot2grid((50, 50), (6, 27), rowspan=5, colspan=24)
             axes.set_title('Licks', fontsize=10, fontweight='bold')
             sns.lineplot(x=df.session, y=df.lick_latency, hue=df.trial_result, marker='o', ax=axes,
-                         estimator=np.median, palette=treslt_palette)
+                         estimator=np.median, palette=treslt_palette, ci=None)
 
             axes.set_ylabel('')
             axes.set_ylim(0, ymax)

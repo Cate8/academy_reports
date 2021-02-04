@@ -306,7 +306,11 @@ def stagetraining_daily (df, save_path, date):
             axes.hlines(y=lines, xmin=min(ttype_df.trial), xmax=max(ttype_df.trial), color=lines_c,
                         linestyle=':', linewidth=1)
             axes.set_xlim(1, total_trials + 1)
-            axes.set_ylim(y_min - 0.2, y_max+ 0.2)
+            try:
+                axes.set_ylim(y_min - 0.2, y_max+ 0.2)
+            except:
+                print('No WMI trials')
+
             axes.set_ylabel('Stim dur \n (sec)')
             axes.set_xlabel('')
             axes.xaxis.set_ticklabels([])
@@ -406,8 +410,13 @@ def stagetraining_daily (df, save_path, date):
             for ttype, ttype_df in last_resp_df.groupby('trial_type'):
                 ttype_color = ttype_df.ttype_colors.iloc[0]
                 ttype_df['acc'] = utils.compute_window(ttype_df.correct_bool, 20)
-                sns.lineplot(x=ttype_df.trial, y=ttype_df.acc, ax=axes, color=ttype_color, marker='o', markersize=5,
-                            style=ttype_df.subject, dashes=[(2, 2), (2, 2)])
+                try:
+                    sns.lineplot(x=ttype_df.trial, y=ttype_df.acc, ax=axes, color=ttype_color, marker='o', markersize=5,
+                                style=ttype_df.subject, dashes=[(2, 2), (2, 2)])
+                except:
+                    print('WARNING: dashes problem')
+                    sns.lineplot(x=ttype_df.trial, y=ttype_df.acc, ax=axes, color=ttype_color, marker='o', markersize=5,
+                                 style=ttype_df.subject)
             linestyle = len(colors) * ['-']
             labels.extend(['First poke', 'Last poke'])
             colors.extend(['black', 'black'])
