@@ -54,12 +54,6 @@ def stagetraining_daily (df, save_path, date):
         mask = 3
 
 
-    try:
-        session = df.session
-    except:
-        df['session'] = 1
-
-
     # THRESHOLDS,  CHANCE & SCREEN BINNING
     stim_width = df.width.iloc[0] / 2
     try:
