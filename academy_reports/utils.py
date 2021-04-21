@@ -75,13 +75,16 @@ def relative_weights(subject, weight):
     'A5': '32.68', 'A6': '31.46', 'A7': '30.40', 'A8': '31.38', 'A9': '31.65', 'A10': '27.71', 'A11': '31.20', 'A12': '27.72',
     'MA1': '31.3', 'MA2': '25.9', 'MA3': '28.2', 'MA4': '27', 'MA5': '30.9',
     'A13':'23.4', 'A14':'21.63', 'A15':'21.8', 'A16':'21.87', 'A17':'22.7', 'A18':'21.37', 'A19':'23.7', 'A20':'24.1',
-    'MA6': '24.84', 'MA7': '26.48', 'MA8': '27.51', 'MA9': '24', 'MA10': '25'}
+    'MA6': '24.84', 'MA7': '26.48', 'MA8': '27.51', 'MA9': '24', 'MA10': '25',
+    'A21':'19.77', 'A22':'20.1', 'A23':'21.1', 'A24':'22.73', 'A25':'21.3','A26':'20.4', 'A27':'21.8','A28':'22.77', 'A29':'22.8', 'A30':'24.1'}
 
     for key, value in basal_weights.items():
         if subject == key:
             basal_weight_subj = float(value)
             relative_weight_subj = weight / basal_weight_subj * 100
             return relative_weight_subj
+        else:
+            return 0
 
 # COMPUTE WINDOW AVERAGE
 def compute_window(data, runningwindow):

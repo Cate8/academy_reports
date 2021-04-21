@@ -44,6 +44,8 @@ def stagetraining_daily (df, save_path, date):
     valid_trials = (df.loc[df['trial_result'] != 'miss']).shape[0]
     missed_trials = total_trials - valid_trials
     reward_drunk = int(df.reward_drunk.iloc[-1])
+    print(reward_drunk)
+    print(type(reward_drunk))
     task = df.task.iloc[0]
     stage = df.stage.iloc[0]
     substage = df.substage.iloc[0]
@@ -52,12 +54,6 @@ def stagetraining_daily (df, save_path, date):
         mask = int(df.mask_holes.iloc[0])
     except:
         mask = 3
-
-
-    try:
-        session = df.session
-    except:
-        df['session'] = 1
 
 
     # THRESHOLDS,  CHANCE & SCREEN BINNING
@@ -158,8 +154,7 @@ def stagetraining_daily (df, save_path, date):
         try:
             df[column].str.contains(',')  # means that contains multiple values
         except:  # remove from conversion list
-            if column != 'STATE_Incorrect_START': # convert incorrects to list always if no crash
-                conversion_list.remove(column)
+            conversion_list.remove(column)
 
     conversion_list.extend(['response_x', 'response_y'])
     df = utils.convert_strings_to_lists(df, conversion_list)
@@ -175,29 +170,42 @@ def stagetraining_daily (df, save_path, date):
         'STATE_Correct_other_reward_START'].fillna(0) + df['STATE_Miss_reward_START'].fillna(0)
     df['lick_latency'] = df['reward_time'] - df['response_window_end']
 
-    # CALCULATE STIMULUS DURATION & FIXATION (when required)
-    if '4B' in task:
-        # grab last item of list (if exists)
-        if type(df['STATE_Fixation_START'].iloc[0]) == list:
-            df['STATE_Fixation_START'] = df['STATE_Fixation_START'].apply(lambda x: x[-1])
-        if type(df['STATE_Fixation_END'].iloc[0]) == list:
-            df['STATE_Fixation_END'] = df['STATE_Fixation_END'].apply(lambda x: x[-1])
-        if type(df['STATE_Stimulus_offset_START'].iloc[0]) == list:
-            df['STATE_Stimulus_offset_START'] = df['STATE_Stimulus_offset_START'].apply(lambda x: x[-1])
-        df['fixation_time'] = df['STATE_Fixation_END'] - df['STATE_Fixation_START']
+    #DEFINE TRIAL TYPE
+    task_type = 'classic'
+    if '4B' in task or '5B' in task:
+        task_type = 't-maze'
 
-        df['stim_duration'] = 0
-        if task == 'StageTraining_4B_V1':
-            df.loc[df['trial_type'] == 'VG', 'stim_duration'] = df['response_window_end'] - df['STATE_Fixation_START']
-            df.loc[df['trial_type'] == 'WM_I', 'stim_duration'] = df['STATE_Stimulus_offset_START'] - df[
-                'STATE_Fixation_START']
-            df.loc[df['trial_type'] == 'WM_D', 'stim_duration'] = df['STATE_Stimulus_offset_START'] - df[
-                'STATE_Fixation_START']
-        elif task == 'StageTraining_4B_V2':
-            df.loc[df['trial_type'] == 'VG', 'stim_duration'] = df['response_window_end'] - df['STATE_Fixation_START']
-            df.loc[df['trial_type'] == 'WM_I', 'stim_duration'] = df['STATE_Fixation_END'] - df['STATE_Fixation_START'] \
-                                        + df['rw_stim_dur']
-            df.loc[df['trial_type'] == 'WM_D', 'stim_duration'] = df['wm_stim_dur']
+    # CALCULATE STIMULUS DURATION & FIXATION (when required)
+    if task_type == 't-maze':
+        if '4B' in task:
+            # grab last item of list (if exists)
+            if type(df['STATE_Fixation_START'].iloc[0]) == list:
+                df['STATE_Fixation_START'] = df['STATE_Fixation_START'].apply(lambda x: x[-1])
+            if type(df['STATE_Fixation_END'].iloc[0]) == list:
+                df['STATE_Fixation_END'] = df['STATE_Fixation_END'].apply(lambda x: x[-1])
+            if type(df['STATE_Stimulus_offset_START'].iloc[0]) == list:
+                df['STATE_Stimulus_offset_START'] = df['STATE_Stimulus_offset_START'].apply(lambda x: x[-1])
+            df['fixation_time'] = df['STATE_Fixation_END'] - df['STATE_Fixation_START']
+
+            if task == 'StageTraining_4B_V1':
+                df.loc[df['trial_type'] == 'VG', 'stim_duration'] = df['response_window_end'] - df['STATE_Fixation_START']
+                df.loc[df['trial_type'] == 'WM_I', 'stim_duration'] = df['STATE_Stimulus_offset_START'] - df[
+                    'STATE_Fixation_START']
+                df.loc[df['trial_type'] == 'WM_D', 'stim_duration'] = df['STATE_Stimulus_offset_START'] - df[
+                    'STATE_Fixation_START']
+            else:
+                df.loc[df['trial_type'] == 'VG', 'stim_duration'] = df['response_window_end'] - df['STATE_Fixation_START']
+                df.loc[df['trial_type'] == 'WM_I', 'stim_duration'] = df['STATE_Fixation_END'] - df['STATE_Fixation_START'] \
+                                            + df['rw_stim_dur']
+                df.loc[df['trial_type'] == 'WM_D', 'stim_duration'] = df['wm_stim_dur']
+
+        elif '5B' in task:
+            df['fixation_time'] = df['STATE_Fixation2_END'] - df['STATE_Fixation1_START']
+            df.loc[df['trial_type'] == 'VG', 'stim_duration'] = df['response_window_end'] - df['STATE_Fixation1_START']
+            df.loc[df['trial_type'] == 'WM_I', 'stim_duration'] = df['STATE_Fixation2_END'] - df[
+                'STATE_Fixation1_START']  + df['rw_stim_dur']
+            df.loc[df['trial_type'] == 'WM_D', 'stim_duration'] = df['STATE_Fixation2_START'] - df[
+                'STATE_Fixation1_START'] + df['wm_stim_dur']
 
     ###### CREATE RESPONSES DF ######
 
@@ -288,7 +296,7 @@ def stagetraining_daily (df, save_path, date):
         if stage == 2:
             axes = plt.subplot2grid((50, 50), (0, 0), rowspan=4, colspan=39)
 
-            if '4B' in task and stage==2 and substage ==2:
+            if task_type == 't-maze' and substage ==2 and '4B' in task:
                 subset = first_resp_df.loc[first_resp_df['trial_type'] == 'WM_D']
                 color = wmds_c
                 # calculate real delay (from stimulus offset to end of corridor cross
@@ -299,7 +307,10 @@ def stagetraining_daily (df, save_path, date):
                 label = 'Real D: ' + str(round(first_resp_df.real_delay.mean(), 2)) + ' s\n'
             else:
                 subset = first_resp_df.loc[first_resp_df['trial_type'] == 'WM_I']
-                subset['stim_duration'] = subset['stim_duration'] - subset['fixation_time'] # ALIGN TO RW ONSET
+                if '5B' in task:
+                    subset['stim_duration'] = subset['rw_stim_dur']  # ALIGN TO RW ONSET
+                else:
+                    subset['stim_duration'] = subset['stim_duration'] - subset['fixation_time'] # ALIGN TO RW ONSET
                 color = wmi_c
                 label = ''
 
@@ -315,8 +326,7 @@ def stagetraining_daily (df, save_path, date):
             try:
                 axes.set_ylim(y_min - 0.2, y_max+ 0.2)
             except:
-                print('No WMI trials')
-
+                pass
             axes.set_ylabel('Stim dur \n (sec)')
             axes.set_xlabel('')
             axes.xaxis.set_ticklabels([])
@@ -332,42 +342,77 @@ def stagetraining_daily (df, save_path, date):
         # PROBS VS TRIAL INDEX (only in stage 3)
         elif stage == 3:
             axes = plt.subplot2grid((50, 50), (0, 0), rowspan=4, colspan=39)
+            if task_type == 'classic':
+                # probs calculation
+                probs = ['pvg', 'pwm_i', 'pwm_d', 'pwm_ds', 'pwm_dl']
+                for prob in probs[:]:
+                    if prob not in df.columns:
+                        probs.remove(prob)
+                probs, probs_c = utils.order_lists(probs, 'probs')  # order lists
 
-            # probs calculation
-            probs = ['pvg', 'pwm_i', 'pwm_d', 'pwm_ds', 'pwm_dl']
-            for prob in probs[:]:
-                if prob not in df.columns:
-                    probs.remove(prob)
-            probs, probs_c = utils.order_lists(probs, 'probs')  # order lists
+                for idx, prob in enumerate(probs):
+                    sns.lineplot(x=df['trial'], y=df[prob], ax=axes, color=probs_c[idx])
+                    axes.hlines(y=[0, 0.5, 1], xmin=0, xmax=total_trials, color=lines_c, linestyle=':', linewidth=1)
+                axes.set_ylabel('Probability', label_kwargs)
+                axes.set_ylim(-0.1, 1.1)
+                axes.set_xlabel('')
+                axes.get_xaxis().set_ticks([])
+                axes.set_frame_on(False)
 
-            for idx, prob in enumerate(probs):
-                sns.lineplot(x=df['trial'], y=df[prob], ax=axes, color=probs_c[idx])
-                axes.hlines(y=[0, 0.5, 1], xmin=0, xmax=total_trials, color=lines_c, linestyle=':', linewidth=1)
-            axes.set_ylabel('Probability', label_kwargs)
-            axes.set_ylim(-0.1, 1.1)
-            axes.set_xlabel('')
-            axes.get_xaxis().set_ticks([])
-            axes.set_frame_on(False)
+                #label
+                try:
+                    prob_max = round(df.pwm_ds.iloc[21], 3)
+                    prob_min = round(df.pwm_ds.iloc[-1], 3)
 
-            #label
-            try:
-                prob_max = round(df.pwm_ds.iloc[21], 3)
-                prob_min = round(df.pwm_ds.iloc[-1], 3)
+                except:
+                    prob_max = round(df.pwm_d.iloc[21], 3)
+                    prob_min = round(df.pwm_d.iloc[-1], 3)
 
-            except:
-                prob_max = round(df.pwm_d.iloc[21], 3)
-                prob_min = round(df.pwm_d.iloc[-1], 3)
+                label = 'Init: ' + str(prob_max) + '\n' + \
+                        'Final: ' + str(prob_min)
+                axes.text(0.9, 1.3, label, transform=axes.transAxes, fontsize=8, verticalalignment='top',
+                          bbox=dict(facecolor='white', edgecolor=lines2_c, alpha=0.5))
 
-            label = 'Init: ' + str(prob_max) + '\n' + \
-                    'Final: ' + str(prob_min)
-            axes.text(0.9, 1.3, label, transform=axes.transAxes, fontsize=8, verticalalignment='top',
-                      bbox=dict(facecolor='white', edgecolor=lines2_c, alpha=0.5))
+                axes.text(0.1, 0.9, s1 + s2 + s3, fontsize=8, transform=plt.gcf().transFigure)  # header
+                axes = plt.subplot2grid((50, 50), (5, 0), rowspan=7, colspan=39)  # axes for the next plot
 
-            axes.text(0.1, 0.9, s1 + s2 + s3, fontsize=8, transform=plt.gcf().transFigure)  # header
-            axes = plt.subplot2grid((50, 50), (5, 0), rowspan=7, colspan=39)  # axes for the next plot
+            else: #5B Tmaze
+                subset = first_resp_df.loc[first_resp_df['trial_type'] == 'WM_D']
+                color = wmds_c
+                label = ''
+
+                y_min = subset.wm_stim_dur.min()
+                y_max = subset.loc[subset['trial'] > 25]
+                y_max = y_max.wm_stim_dur.max()
+                sns.lineplot(x=subset.trial, y=subset.wm_stim_dur, marker='o', markersize=5, ax=axes, color=color)
+
+                lines = [0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0]
+                try:
+                    axes.hlines(y=lines, xmin=min(ttype_df.trial), xmax=max(ttype_df.trial), color=lines_c,
+                            linestyle=':', linewidth=1)
+                except:
+                    pass
+                try:
+                    axes.set_ylim(y_min - 0.2, y_max + 0.2)
+                except:
+                    pass
+                axes.set_xlim(1, total_trials + 1)
+
+                axes.set_ylabel('Stim dur \n (sec)')
+                axes.set_xlabel('')
+                axes.xaxis.set_ticklabels([])
+
+                label = label + 'Max: ' + str(round(y_max, 3)) + ' s\n' + \
+                        'Min: ' + str(round(y_min, 3)) + ' s'
+                axes.text(0.9, 1.3, label, transform=axes.transAxes, fontsize=8, verticalalignment='top',
+                          bbox=dict(facecolor='white', edgecolor=lines2_c, alpha=0.5))
+
+                axes.text(0.1, 0.9, s1 + s2 + s3, fontsize=8, transform=plt.gcf().transFigure)  # header
+                axes = plt.subplot2grid((50, 50), (5, 0), rowspan=7, colspan=39)  # axes for the next plot
+
 
         # DELAY LENGTH PLOT
-        elif stage == 4:
+        elif stage == 4 and task_type == 'classic':
             axes = plt.subplot2grid((50, 50), (0, 0), rowspan=4, colspan=39)
             # DELAY LENGTH PLOT
             subset = df.loc[df['trial_type'] == 'WM_Dl']
@@ -416,13 +461,7 @@ def stagetraining_daily (df, save_path, date):
             for ttype, ttype_df in last_resp_df.groupby('trial_type'):
                 ttype_color = ttype_df.ttype_colors.iloc[0]
                 ttype_df['acc'] = utils.compute_window(ttype_df.correct_bool, 20)
-                try:
-                    sns.lineplot(x=ttype_df.trial, y=ttype_df.acc, ax=axes, color=ttype_color, marker='o', markersize=5,
-                                style=ttype_df.subject, dashes=[(2, 2), (2, 2)])
-                except:
-                    print('WARNING: dashes problem')
-                    sns.lineplot(x=ttype_df.trial, y=ttype_df.acc, ax=axes, color=ttype_color, marker='o', markersize=5,
-                                 style=ttype_df.subject)
+                sns.lineplot(x=ttype_df.trial, y=ttype_df.acc, ax=axes, color=ttype_color, marker='o', markersize=5) #style=ttype_df.subject, dashes=[(2, 2), (2, 2)]
             linestyle = len(colors) * ['-']
             labels.extend(['First poke', 'Last poke'])
             colors.extend(['black', 'black'])

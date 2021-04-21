@@ -45,8 +45,13 @@ def intersession(df, save_path_intersesion):
         x_min = df.session.min()
         tasks_list = df.task.unique().tolist()
         try:
-            df['task'].str.contains("StageTraining_4B")
+            df['task'].str.contains("4B")
             training_type = 't-maze'
+            try:
+                df['task'].str.contains("5B")
+                training_type = 't-maze'
+            except:
+                pass
         except:
             training_type = 'classic'
 
@@ -148,8 +153,16 @@ def intersession(df, save_path_intersesion):
         df['lick_latency'] = df['reward_time'] - df['response_window_end']
 
         # Stimulus duration and fixation calc (when required)
-        df['STATE_Fixation_START'] = df['STATE_Fixation_START'].apply(lambda x: x[-1])
-        df['STATE_Fixation_END'] = df['STATE_Fixation_END'].apply(lambda x: x[-1])
+        try:
+            df['STATE_Fixation_START'] = df['STATE_Fixation_START'].apply(lambda x: x[-1])
+            df['STATE_Fixation_END'] = df['STATE_Fixation_END'].apply(lambda x: x[-1])
+        except:
+            try:
+                df['STATE_Fixation_START'] = df['STATE_Fixation1_START'].apply(lambda x: x[-1])
+            except:
+                df['STATE_Fixation_START'] = df['STATE_Fixation1_START']
+            df['STATE_Fixation_END'] = df['STATE_Fixation2_END']
+
         try:
             df['STATE_Stimulus_offset_START'] = df['STATE_Stimulus_offset_START'].apply(lambda x: x[-1])
         except:
@@ -244,7 +257,7 @@ def intersession(df, save_path_intersesion):
             treslt_palette = sns.set_palette(treslts_c, n_colors=len(treslts_c))
             axes.set_title('Responses', fontsize=10, fontweight='bold')
             sns.lineplot(x=first_resp_df.session, y=first_resp_df.resp_latency, hue=first_resp_df.trial_result, style=resp_df.task,
-                         marker='o', ax=axes, estimator=np.median, palette = treslt_palette, ci=None)
+                         marker='o', ax=axes, estimator=np.median, palette = treslt_palette)
 
             axes.set_ylabel('Latency (sec)', label_kwargs)
             axes.set_ylim(0, ymax)
@@ -255,7 +268,7 @@ def intersession(df, save_path_intersesion):
             axes = plt.subplot2grid((50, 50), (6, 27), rowspan=5, colspan=24)
             axes.set_title('Licks', fontsize=10, fontweight='bold')
             sns.lineplot(x=df.session, y=df.lick_latency, hue=df.trial_result, marker='o', ax=axes,
-                         estimator=np.median, palette=treslt_palette, ci=None)
+                         estimator=np.median, palette=treslt_palette)
 
             axes.set_ylabel('')
             axes.set_ylim(0, ymax)
