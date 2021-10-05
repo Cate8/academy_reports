@@ -17,11 +17,8 @@ def main():
 
     try:
         path = arg.file[0]
-
         file_name = os.path.basename(path)
-
         file_name = file_name.split(".")[0]
-
         print('making report for', file_name)
 
         df = pd.read_csv(path, sep=';')
@@ -44,13 +41,11 @@ def main():
             touchteaching_daily(df, save_path, date)
         elif task[0:13] == 'StageTraining':
             stagetraining_daily(df, save_path, date)
-            #stagetraining_daily_elif(df, save_path, date)
         else:
             print('Task not found for file:', path, 'task:', task)
 
 
     except:
-
         raw_paths = utils.path_generator(settings.data_directory, '.csv')
 
         if not os.path.exists(settings.data_directory):
