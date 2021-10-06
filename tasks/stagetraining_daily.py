@@ -150,7 +150,7 @@ def stagetraining_daily (df, save_path, date):
         try:
             df[column].str.contains(',')  # means that contains multiple values
         except:  # remove from conversion list
-            if column != 'STATE_Incorrect_START':
+            if column != 'STATE_Incorrect_START': # to remove
                 conversion_list.remove(column)
 
     conversion_list.extend(['response_x', 'response_y'])
@@ -179,10 +179,16 @@ def stagetraining_daily (df, save_path, date):
         df.loc[df['trial_type'] == 'VG', 'stim_duration'] = df['response_window_end'] - df['STATE_Fixation1_START']
         df.loc[df['trial_type'] == 'WM_I', 'stim_duration'] = df['STATE_Fixation3_END'] - df[
             'STATE_Fixation1_START']  + df['rw_stim_dur']
-        df.loc[((df['trial_type'] == 'WM_D') & (df['delay_type'] == 'DS')), 'stim_duration'] = df['STATE_Fixation2_END'] - df[
-            'STATE_Fixation1_START'] + df['wm_stim_dur']
-        df.loc[((df['trial_type'] == 'WM_D') & (df['delay_type'] == 'DL')), 'stim_duration'] = df['STATE_Fixation1_END'] - df[
+        try:
+            df.loc[((df['trial_type'] == 'WM_D') & (df['delay_type'] == 'DS')), 'stim_duration'] = df['STATE_Fixation2_END'] - df[
+                'STATE_Fixation1_START'] + df['wm_stim_dur']
+        except:
+            pass
+        try:
+            df.loc[((df['trial_type'] == 'WM_D') & (df['delay_type'] == 'DL')), 'stim_duration'] = df['STATE_Fixation1_END'] - df[
             'STATE_Fixation1_START']
+        except:
+            pass
 
 
     ###### CREATE RESPONSES DF ######
