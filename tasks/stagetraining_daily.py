@@ -284,7 +284,9 @@ def stagetraining_daily (df, save_path, date):
             if stage == 2 and task_type == 't-maze':
                 var = 'rw_stim_dur'
                 hlines = [0.4, 0.3, 0.2, 0.1, 0]
-                color=wmds_c
+            elif stage == 3 and task_type == 't-maze':
+                color = wmds_c
+                hlines = [0.4, 0.3, 0.2, 0.1, 0]
 
             sns.lineplot(x=first_resp_df.trial, y=first_resp_df[var], marker='o', ax=axes, color=color)
             axes.hlines(y=hlines, xmin=min(first_resp_df.trial), xmax=max(first_resp_df.trial), color=lines2_c, linestyle=':', linewidth=1)
@@ -293,12 +295,12 @@ def stagetraining_daily (df, save_path, date):
             axes.xaxis.set_ticklabels([])
             axes.set_xlim(1, total_trials + 1)
 
-            try:
-                subs= first_resp_df.loc[first_resp_df['trial']>25]
-                ymin= int(min(var))
-                ymax= int(max(subs[var]))
-            except:
+            subs= first_resp_df.loc[((first_resp_df['trial']>25))]
+            ymin= min(subs[var])
+            ymax= max(subs[var])
+            if type(ymin)==str:
                 ymin = 0
+            elif type(ymax) ==str:
                 ymax = 0.8
             axes.set_ylim(ymin - 0.2, ymax + 0.2)
 
