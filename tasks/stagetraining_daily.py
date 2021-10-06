@@ -145,16 +145,17 @@ def stagetraining_daily (df, save_path, date):
                        'STATE_Fixation_START', 'STATE_Fixation_END', 'STATE_Response_window2_START',
                        'STATE_Response_window2_END']
 
-
-    for idx, column in enumerate(conversion_list):
+    new_conversion_list = []
+    for column in conversion_list:
         try:
             df[column].str.contains(',')  # means that contains multiple values
+            new_conversion_list.append(column)
         except:  # remove from conversion list
-            if column != 'STATE_Incorrect_START': # to remove
-                conversion_list.remove(column)
+            if column == 'STATE_Incorrect_START':
+                new_conversion_list.append(column)
 
-    conversion_list.extend(['response_x', 'response_y'])
-    df = utils.convert_strings_to_lists(df, conversion_list)
+    new_conversion_list.extend(['response_x', 'response_y'])
+    df = utils.convert_strings_to_lists(df, new_conversion_list)
 
 
     ######  COLUMNS OPERATIONS ######
