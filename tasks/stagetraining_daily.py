@@ -143,7 +143,7 @@ def stagetraining_daily (df, save_path, date):
     ###### CONVERT STRINGS TO LISTS ######
     conversion_list = ['STATE_Incorrect_START', 'STATE_Incorrect_END',
                        'STATE_Fixation_START', 'STATE_Fixation_END', 'STATE_Response_window2_START',
-                       'STATE_Response_window2_END', 'STATE_Stimulus_offset_START', 'STATE_Re_Start_task_START']
+                       'STATE_Response_window2_END']
 
 
     for idx, column in enumerate(conversion_list):
@@ -193,11 +193,8 @@ def stagetraining_daily (df, save_path, date):
 
     ###### CREATE RESPONSES DF ######
 
-    # check if unnest is needed
-    df['unnest'] = 1
-    df.loc[((df['stage'] == 1) & (df['substage'] == 1) & (df['date'] != '2020/11/18')), 'unnest'] = 0
-
     # needed columns before the unnest
+    df['unnest'] = 1
     df['responses_time'] = df.apply(lambda row: utils.create_responses_time(row, row['unnest']), axis=1)
     df['response_result'] = df.apply(lambda row: utils.create_reponse_result(row, row['unnest']), axis=1)
 
@@ -499,7 +496,7 @@ def stagetraining_daily (df, save_path, date):
 
         hist, bins = np.histogram(first_resp_df.x, bins=bins_resp)
 
-        sns.lineplot(x=x_positions, y=hist, marker='o', markersize=5, err_style="bars", color=lines2_c, ax=axes)
+        #sns.lineplot(x=x_positions, y=hist, marker='o', markersize=5, err_style="bars", color=lines2_c, ax=axes)
         for ttype, ttype_df in first_resp_df.groupby('trial_type'):
             ttype_color = ttype_df.ttype_colors.iloc[0]
             hist, bins = np.histogram(ttype_df.response_x, bins=bins_resp)
@@ -543,7 +540,10 @@ def stagetraining_daily (df, save_path, date):
         ### PLOT 7: RESPONSE LATENCIES   # we look to all the reponses time
         axes = plt.subplot2grid((50, 50), (31, 18), rowspan=25, colspan=15)
 
-        y_max = 10
+        if stage == 1:
+            y_max = 30
+        else:
+            y_max = 10
         sns.boxplot(x='x', y='resp_latency', hue='rt_bins', data=first_resp_df, color='white', linewidth=0.5,
                         showfliers=False, ax=axes)
         resp_df['rt_bins'] = pd.cut(resp_df.response_x, bins=bins_resp, labels=x_positions,
@@ -612,10 +612,10 @@ def stagetraining_daily (df, save_path, date):
 
         # RASTER PLOT
         x_min = -2
-        x_max = 10
-
         if stage == 1:
             x_max = 30
+        else:
+            x_max = 10
 
         axes = plt.subplot2grid((50, 50), (0, 0), rowspan=42, colspan=25)
         treslt_palette = sns.set_palette(rreslts_c, n_colors=len(rreslts_c))
