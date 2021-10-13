@@ -296,8 +296,12 @@ def stagetraining_daily (df, save_path, date):
             axes.set_xlim(1, total_trials + 1)
 
             subs= first_resp_df.loc[((first_resp_df['trial']>25))]
-            ymin= min(subs[var])
-            ymax= max(subs[var])
+            try:
+                ymin= min(subs[var])
+                ymax= max(subs[var])
+            except:
+                ymax= min(first_resp_df[var])
+                ymin=ymax
             if type(ymin)==str:
                 ymin = 0
             elif type(ymax) ==str:
