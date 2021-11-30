@@ -85,8 +85,6 @@ def relative_weights(subject, weight):
             basal_weight_subj = float(value)
             relative_weight_subj = weight / basal_weight_subj * 100
             return relative_weight_subj
-        else:
-            return 0
 
 # COMPUTE WINDOW AVERAGE
 def compute_window(data, runningwindow):
@@ -103,37 +101,23 @@ def compute_window(data, runningwindow):
 
 
 # COLLECT ALL REPONSES TIMES IN A COLUMN
-def create_responses_time(row, unnest):
-    if unnest == 1:
-        try:
-            result = row['STATE_Incorrect_START'].tolist().copy()
-        except (TypeError, AttributeError):
-            result = row['STATE_Incorrect_START'].copy()
-        items = [row['STATE_Correct_first_START'], row['STATE_Correct_other_START'], row['STATE_Punish_START']]
-        for item in items:
-            if not np.isnan(item):
-                result += [item]
-    else:
-        result = []
-        items = [row['STATE_Correct_first_START'], row['STATE_Correct_other_START']]
-        for item in items:
-            if not np.isnan(item):
-                result += [item]
-        result = result
-
+def create_responses_time(row):
+    try:
+        result = row['STATE_Incorrect_START'].tolist().copy()
+    except (TypeError, AttributeError):
+        result = row['STATE_Incorrect_START'].copy()
+    items = [row['STATE_Correct_first_START'], row['STATE_Correct_other_START'], row['STATE_Punish_START']]
+    for item in items:
+        if not np.isnan(item):
+            result += [item]
     return result
 
 
 # RESPONSE RESULT COLUMN
-def create_reponse_result(row, unnest):
-    if unnest == 1:
-        result = ['incorrect'] * len(row['STATE_Incorrect_START'])
-        if row['trial_result'] != 'miss' and row['trial_result'] != 'incorrect':
-            result += [row['trial_result']]
-    else:
-        result = []
-        if row['trial_result'] != 'miss' and row['trial_result'] != 'incorrect':
-            result += [row['trial_result']]
+def create_reponse_result(row):
+    result = ['incorrect'] * len(row['STATE_Incorrect_START'])
+    if row['trial_result'] != 'miss' and row['trial_result'] != 'incorrect':
+        result += [row['trial_result']]
     return result
 
 
