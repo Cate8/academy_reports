@@ -385,7 +385,10 @@ def stagetraining_daily (df, save_path, date):
             y_max = subset.dl.max()
 
             axes.set_xlim(1, total_trials + 1)
-            axes.set_ylim(y_min - 0.2, y_max + 0.2)
+            try:
+                axes.set_ylim(y_min - 0.2, y_max + 0.2)
+            except:
+                axes.set_ylim(0, 1.5)
             axes.set_ylabel('Delay len \n (sec)')
             axes.set_xlabel('')
             axes.xaxis.set_ticklabels([])
