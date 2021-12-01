@@ -79,7 +79,7 @@ def intersession(df, save_path_intersesion):
             labels = [-1, 0, 1]
             df.loc[df['mask'] == 3, 'r_c'] = pd.cut(df.response_first, bins=bins).map(
                 dict(zip(bins, labels)))
-            df.loc[df['mask'] == 3, 'x_c'] = pd.cut(df.x, bins=bins, ordered=True).map(
+            df.loc[df['mask'] == 3, 'x_c'] = pd.cut(df.x, bins=bins).map(
                 dict(zip(bins, labels)))
         elif mask == 5:
             bins = pd.IntervalIndex.from_tuples([(0, 82), (82, 163), (163, 242), (242, 322), (322, 401)])
@@ -168,7 +168,7 @@ def intersession(df, save_path_intersesion):
 
             sns.lineplot(x='day', y='trial', style='stage', markers=True, ax=axes, color='black',
                          data=grouped_df, estimator=sum, ci=None)
-            axes.axhline(y=150,color=lines_c, linestyle=':', linewidth=1)
+            axes.axhline(y=100,color=lines_c, linestyle=':', linewidth=1)
             axes.set_ylabel('Nº of trials', label_kwargs)
             axes.set_xlabel('')
             axes.xaxis.set_ticklabels([])

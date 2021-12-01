@@ -45,6 +45,14 @@ def stagetraining_daily (df, save_path, date):
     task = df.task.iloc[0]
     stage = df.stage.iloc[0]
     substage = df.substage.iloc[0]
+
+    try:
+        df = df.loc[df['BPODCRASH'].isnull()] #remove corrupt columns
+        print('WARNING: BPODCRASH ERROR!')
+    except:
+        pass
+
+
     try:
         df.rename(columns={"mask": "mask_holes"}, inplace=True)  # rename because its name coincides with a function
         mask = int(df.mask_holes.iloc[0])
@@ -161,8 +169,12 @@ def stagetraining_daily (df, save_path, date):
     ######  COLUMNS OPERATIONS ######
     # CALCULATE LATENIES
     #add nans to empty list, if not error
-    df['STATE_Response_window2_END'] = df['STATE_Response_window2_END'].apply(lambda x: [np.nan] if len(x) == 0 else x)
-    df['response_window_end'] = df['STATE_Response_window2_END'].apply(lambda x: x[-1])
+    try:
+        df['STATE_Response_window2_END'] = df['STATE_Response_window2_END'].apply( lambda x: [np.nan] if len(x) == 0 else x)
+        df['response_window_end'] = df['STATE_Response_window2_END'].apply(lambda x: x[-1])
+    except:
+        df['response_window_end'] = df['STATE_Response_window2_END'].apply(lambda x: x if type(x) == float else [np.nan])
+
     df['response_window_end'] = df['response_window_end'].fillna(df['STATE_Response_window_END'])
     df['reward_time'] = df['STATE_Correct_first_reward_START'].fillna(0) + df[
         'STATE_Correct_other_reward_START'].fillna(0) + df['STATE_Miss_reward_START'].fillna(0)
@@ -294,7 +306,7 @@ def stagetraining_daily (df, save_path, date):
             axes.xaxis.set_ticklabels([])
             axes.set_xlim(1, total_trials + 1)
 
-            subs= first_resp_df.loc[((first_resp_df['trial']>25))]
+            subs= first_resp_df.loc[((first_resp_df['trial']>10))]
             try:
                 ymin= min(subs[var])
                 ymax= max(subs[var])
@@ -337,11 +349,11 @@ def stagetraining_daily (df, save_path, date):
 
             #label
             try:
-                prob_max = round(df.pwm_ds.iloc[21], 3)
+                prob_max = round(df.pwm_ds.iloc[10], 3)
                 prob_min = round(df.pwm_ds.iloc[-1], 3)
             except:
                 try:
-                    prob_max = round(df.pwm_d.iloc[21], 3)
+                    prob_max = round(df.pwm_d.iloc[10], 3)
                     prob_min = round(df.pwm_d.iloc[-1], 3)
                 except:
                     print('session very short!')
