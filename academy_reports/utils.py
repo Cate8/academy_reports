@@ -165,3 +165,13 @@ def order_lists(list, type):
             ordered_c_list.append(c_order[idx])
 
     return ordered_list, ordered_c_list
+
+# STATS AFTER GROUPBY FOR REPEATING BIAS CALC
+def stats_function(df, groupby_list):
+    """Creates stats_ dataframe with the groupby rows desired and CRB calculated"""
+    stats_ = df.groupby(groupby_list).agg({'version': 'max', 'chance': 'max', 'correct_bool': 'mean',
+                                               'rep_bool': ['mean', 'std', 'sum', 'count']}).reset_index()
+    stats_.columns = list(map(''.join, stats_.columns.values))
+    stats_['norm'] = stats_['rep_boolmean'] / stats_['chancemax']  # normalize by chance
+    stats_['CRB'] = stats_['norm'] - 1  # corrected repeating bias calculation
+    return stats_

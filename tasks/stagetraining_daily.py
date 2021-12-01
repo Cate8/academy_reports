@@ -195,9 +195,8 @@ def stagetraining_daily (df, save_path, date):
     ###### CREATE RESPONSES DF ######
 
     # needed columns before the unnest
-    df['unnest'] = 1
-    df['responses_time'] = df.apply(lambda row: utils.create_responses_time(row, row['unnest']), axis=1)
-    df['response_result'] = df.apply(lambda row: utils.create_reponse_result(row, row['unnest']), axis=1)
+    df['responses_time'] = df.apply(lambda row: utils.create_responses_time(row), axis=1)
+    df['response_result'] = df.apply(lambda row: utils.create_reponse_result(row), axis=1)
 
     ### unnest
     resp_df = utils.unnesting(df, ['response_x', 'response_y', 'responses_time', 'response_result'])
@@ -454,10 +453,11 @@ def stagetraining_daily (df, save_path, date):
         # axis
         axes.hlines(y=chance_lines, xmin=x_min, xmax=x_max, color=lines_c, linestyle=':', linewidth=1)
         axes.fill_between(np.linspace(x_min, x_max, 2), chance_p, 0, facecolor=lines2_c, alpha=0.3)
-        axes.set_xlabel('Trial type', label_kwargs)
+        axes.set_xlabel('', label_kwargs)
         utils.axes_pcent(axes, label_kwargs)
         axes.set_ylabel('')
         axes.yaxis.set_ticklabels([])
+        axes.set_xticklabels(ttypes, rotation=40)
 
         # legend
         lines = [Line2D([0], [0], color=colors[i], marker='o', markersize=7, markerfacecolor=colors[i], linestyle=linestyle[i]) for i in
