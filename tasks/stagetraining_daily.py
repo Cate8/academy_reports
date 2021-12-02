@@ -106,12 +106,9 @@ def stagetraining_daily (df, save_path, date):
     ######  RELEVANT COLUMNS  ######
 
     # add columns (when absent)
-    column_list = ['STATE_Wait_for_fixation_START', 'STATE_Fixation_break_START', 'STATE_Delay_START',
-                   'STATE_Doors_START', 'STATE_Correct_first_START', 'STATE_Miss_START', 'STATE_Punish_START',
-                   'STATE_After_punish_START', 'STATE_Incorrect_START', 'STATE_Incorrect_END',
-                   'STATE_Response_window2_START',  'STATE_Response_window2_END', 'STATE_Correct_other_START',
-                   'STATE_Correct_first_reward_START', 'STATE_Correct_other_reward_START', 'STATE_Miss_reward_START',
-                   'STATE_Stimulus_offset_START', 'STATE_Re_Start_task_START']
+    column_list = ['STATE_Correct_first_START', 'STATE_Miss_START', 'STATE_Punish_START', 'STATE_Correct_other_START',
+                   'STATE_Incorrect_START', 'STATE_Incorrect_END', 'STATE_Response_window2_START',  'STATE_Response_window2_END',
+                   'STATE_Correct_first_reward_START', 'STATE_Correct_other_reward_START', 'STATE_Miss_reward_START']
     for col in column_list:
         if col not in df.columns:
             df[col] = np.nan
@@ -472,7 +469,10 @@ def stagetraining_daily (df, save_path, date):
         utils.axes_pcent(axes, label_kwargs)
         axes.set_ylabel('')
         axes.yaxis.set_ticklabels([])
-        axes.set_xticklabels(ttypes, rotation=40)
+        try:
+            axes.set_xticklabels(ttypes, rotation=40)
+        except:
+            pass
 
         # legend
         lines = [Line2D([0], [0], color=colors[i], marker='o', markersize=7, markerfacecolor=colors[i], linestyle=linestyle[i]) for i in

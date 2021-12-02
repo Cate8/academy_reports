@@ -36,6 +36,18 @@ def intersession(df, save_path_intersesion):
         ##### SELECT LAST MONTH SESSIONS #####
         df['day'] = pd.to_datetime(df['date']).dt.date
         df= df.loc[df['day'] > df.day.max() - timedelta(days=20)]
+
+        #######  RELEVANT COLUMNS  ######
+        # add columns (when absent)
+        column_list = ['STATE_Correct_first_START', 'STATE_Miss_START', 'STATE_Punish_START',
+                       'STATE_Correct_other_START',
+                       'STATE_Incorrect_START', 'STATE_Incorrect_END', 'STATE_Response_window2_START',
+                       'STATE_Response_window2_END',
+                       'STATE_Correct_first_reward_START', 'STATE_Correct_other_reward_START',
+                       'STATE_Miss_reward_START']
+        for col in column_list:
+            if col not in df.columns:
+                df[col] = np.nan
        
 
         ###### CONVERT STRINGS TO LISTS ######
