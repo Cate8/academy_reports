@@ -147,8 +147,8 @@ def chance_calculation(correct_th):
 # ORDER LISTS
 def order_lists(list, type):
     if type == 'ttypes':
-        order = ['VG', 'WM_I', 'WM_D', 'WM_Ds', 'WM_Dl']
-        c_order = ['#393b79', '#6b6ecf', '#9c9ede', '#9c9ede', '#a55194']
+        order = ['VG', 'WM_I', 'WM_D', 'WM_Ds', 'WM_Dm', 'WM_Dl']
+        c_order = ['#393b79', '#6b6ecf', '#9c9ede', '#9c9ede', '#ce6dbd', '#a55194']
     elif type == 'treslts':
         order = ['correct_first', 'correct_other', 'punish', 'incorrect', 'miss']
         c_order = ['green', 'limegreen', 'firebrick', 'red', 'black']

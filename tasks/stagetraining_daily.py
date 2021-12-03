@@ -137,6 +137,12 @@ def stagetraining_daily (df, save_path, date):
     except:
         pass
     try:
+        if (df['pwm_dm'] > 0).any():
+            df.loc[((df.trial_type == 'WM_D') & (df.delay_type == 'DM')), 'trial_type'] = 'WM_Dm'
+            df.loc[(df.trial_type == 'WM_Dm', 'ttype_colors')] = wmdm_c
+    except:
+        pass
+    try:
         if (df['pwm_dl'] > 0).any():
             df.loc[((df.trial_type == 'WM_D') & (df.delay_type == 'DL')), 'trial_type'] = 'WM_Dl'
             df.loc[(df.trial_type == 'WM_Dl', 'ttype_colors')] = wmdl_c

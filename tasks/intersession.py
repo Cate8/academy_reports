@@ -89,15 +89,11 @@ def intersession(df, save_path_intersesion):
         if mask == 3:
             bins = pd.IntervalIndex.from_tuples([(25, 105), (160, 240), (295, 375)])
             labels = [-1, 0, 1]
-            df.loc[df['mask'] == 3, 'r_c'] = pd.cut(df.response_first, bins=bins).map(
-                dict(zip(bins, labels)))
-            df.loc[df['mask'] == 3, 'x_c'] = pd.cut(df.x, bins=bins).map(
-                dict(zip(bins, labels)))
         elif mask == 5:
             bins = pd.IntervalIndex.from_tuples([(0, 82), (82, 163), (163, 242), (242, 322), (322, 401)])
             labels = [-2, -1, 0, 1, 2]
-            df['r_c'] = pd.cut(df['response_first'], bins, labels=labels)
-            df['x_c'] = pd.cut(df['x'], bins, labels=labels)
+        df['r_c'] = pd.cut(df['response_first'], bins).map(dict(zip(bins, labels)))
+        df['x_c'] = pd.cut(df['x'], bins).map(dict(zip(bins, labels)))
 
         ## previous stim, resp and outcome
         df['prev_x_c'] = df['x_c'].shift(1)
