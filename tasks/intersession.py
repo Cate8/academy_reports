@@ -100,6 +100,7 @@ def intersession(df, save_path_intersesion):
         df['prev_r_c'] = df['r_c'].shift(1)
         df['prev_result'] = df['trial_result'].shift(1)
         df['rep_bool'] = df.apply(lambda x: 1 if x.loc['r_c'] == x.loc['prev_r_c'] else 0, axis=1)
+        df.loc[((df['trial_result'] == 'miss') | (df['prev_result'] == 'miss')), 'rep_bool'] = np.nan #add nans in misses
 
         # latencies & times
         df['rw_end'] = df['rw_end_last'].fillna(df['STATE_Response_window_END'])
@@ -362,9 +363,9 @@ def intersession(df, save_path_intersesion):
 #           #### PLOT 10: REPEATING BIAS
             axes = plt.subplot2grid((50, 50), (39, 41), rowspan=11, colspan=9)
 
-
             # Boxplot
-            stats_= utils.stats_function(df, ['day', 'prev_result'])
+            subset = df.loc[df['trial'] > 10] #remove first trials
+            stats_= utils.stats_function(subset, ['day', 'prev_result'])
             treslt_labels=['C_f', 'C_o', 'P']
             if df.stage.max != 1:
                 treslt_palette = [correct_first_c, punish_c]

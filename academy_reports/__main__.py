@@ -70,13 +70,13 @@ def main():
                     os.makedirs(save_directory)
 
                 # INTERSESSIONS
-                # try:
-                file_name_intersesion = subject + '_intersession.pdf'
-                save_path_intersesion = os.path.join(save_directory, file_name_intersesion)
-                intersession(df.copy(), save_path_intersesion)
-                # except:
-                # print('Error performing the intersession')
-                #     pass
+                try:
+                    file_name_intersesion = subject + '_intersession.pdf'
+                    save_path_intersesion = os.path.join(save_directory, file_name_intersesion)
+                    intersession(df.copy(), save_path_intersesion)
+                except:
+                    print('Error performing the intersession')
+                    pass
 
                 # DAILY REPORTS
                 for sess, session in df.groupby('session'):
@@ -92,7 +92,7 @@ def main():
                     save_path = os.path.join(save_directory, file_name)
 
                     if not os.path.exists(save_path): #ONLY DONE IF NOT EXISTS
-                        # try:
+                        try:
                             if task == 'LickTeaching':
                                 lickteaching_daily(session.copy(), save_path, date)
                             elif task == 'TouchTeaching':
@@ -101,9 +101,9 @@ def main():
                                 stagetraining_daily(session.copy(), save_path, date)
                             else:
                                 print('Task not found for file:', path, 'task:', task)
-                        # except:
-                        #     print('Error performing the intersession')
-                        #     pass
+                        except:
+                            print('Error performing the intersession')
+                            pass
                     else:
                         print('Already done!')
 
