@@ -528,8 +528,10 @@ def stagetraining_daily (df, save_path, date):
         for ttype, ttype_df in first_resp_df.groupby('trial_type'):
             ttype_color = ttype_df.ttype_colors.iloc[0]
             hist, bins = np.histogram(ttype_df.response_x, bins=bins_resp)
-            a = sns.lineplot(x=x_positions, y=hist, marker='o', markersize=8, err_style="bars", color=ttype_color)
-
+            try:
+                sns.lineplot(x=x_positions, y=hist, marker='o', markersize=8, err_style="bars", color=ttype_color)
+            except:
+                pass
         axes.set_xlim(x_min, x_max)
         axes.set_xlabel('$Responses\ (r_{t})\ (mm)$', label_kwargs)
         axes.set_ylabel('Counts', label_kwargs)
