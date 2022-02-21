@@ -6,7 +6,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from academy_reports import utils
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
-
+#
 # PLOT COLORS
 correct_first_c = 'green'
 correct_other_c = 'limegreen'
