@@ -69,6 +69,35 @@ def unnesting(df, explode):
     #         pass
     return finaldf
 
+# SUBJECT TAGS
+def subjects_tags():
+    '''Identifies the subject depending on the tag
+     ECOHAB reads tags with reversed order by pairs'''
+    all_subjects = ['man', 'T1', 'T2', 'T3',
+                    'A41', 'A42', 'A43', 'A44', 'A45', 'A46', 'A47', 'A48', 'A49', 'A50', 'A51', 'A52']
+    all_mv_tags = ['041A9DB979', '041A9C89B3', '041A9C7958', '0419A8212D',
+                   '0417CA5FDE', '041A9DBD90', '0419A86ECB', '0419A8218D', '0417CA97FA', '0419A8701C',
+                   '041A9D7BE0', '0419A822D2', '041A9DBDF9', '041A9DB349', '0419A81BFB', '041A9D86C5']
+    all_colors = ['lightsteelblue', 'mediumseagreen', 'greenyellow', 'salmon',
+              'yellow', 'orange', 'tomato', 'crimson', 'mediumvioletred',
+              'darkorchid', 'darkblue', 'royalblue', 'lightskyblue', 'mediumaquamarine',
+              'green', 'yellowgreen']
+
+    all_ecohab_tags = []  # ECOHAB reads tags with reversed order by pairs
+    for tag in all_mv_tags:  # loop thought MV tags
+        tag_r = tag[::-1]  # revert
+        new_tag = ''
+        for (front, back) in zip(tag_r[0::2], tag_r[1::2]):  # invert 2 by 2
+            new_tag += back + front
+        all_ecohab_tags.append(new_tag)
+
+    return all_subjects, all_ecohab_tags, all_colors
+
+
+
+
+
+
 # BASAL WEIGHTS
 def relative_weights(subject, weight):
     basal_weights = {
