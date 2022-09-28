@@ -172,7 +172,7 @@ def main():
 
     file_name = 'Ecohab_report_' + date_s.replace('.','') + '_' + date_e.replace('.','') + '.pdf'
     save_path = os.path.join(save_directory2, file_name)
-    ecohab_report(df, save_path)
+    ecohab_report(merged_df, save_path)
     # try:
     #     ecohab_report(df, save_path)
     # except:
