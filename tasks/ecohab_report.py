@@ -153,7 +153,10 @@ def ecohab_report (df, save_path):
             axes.set_yticks([])
             axes.set_xlim(x_min, x_max)
             if n != 0:
-                axes.get_legend().remove()
+                try:
+                    axes.get_legend().remove()
+                except:
+                    pass
                 if n < len(df.subject.unique()) - 1:
                     axes.get_xaxis().set_visible(False)
             else:

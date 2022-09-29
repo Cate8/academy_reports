@@ -124,12 +124,16 @@ def main():
     # merge different csvs
     datatype=None #gui or script
     column_names= ['Date', 'Time', 'Antena_number', 'Duration', 'RFID_detected']
-    try:
-        raw_paths = utils.path_generator(settings.data_directory2, '.csv')
-        datatype='script'
-    except:
+    
+    # Data form our script
+    raw_paths = utils.path_generator(settings.data_directory2, '.csv')
+    datatype='script'
+    # Data form their gui
+    if raw_paths == []: 
         raw_paths = utils.path_generator(settings.data_directory2, '.txt')
         datatype='gui'
+    if raw_paths == []:
+        print('No files found')
 
     if not os.path.exists(settings.data_directory2):
         os.makedirs(settings.data_directory2)
@@ -155,6 +159,8 @@ def main():
 
         else:
             print('weird datatype')
+
+    print(raw_paths)
 
     merged_df = pd.concat(dfs)
     save_directory2 = os.path.join(settings.save_directory2)
