@@ -63,8 +63,8 @@ def stagetraining_daily (df, save_path, date):
     # THRESHOLDS,  CHANCE & SCREEN BINNING
     stim_width = df.width.iloc[0] / 2
     try:
-        correct_th = df.correct_th.iloc[20] / 2
-        repoke_th = df.repoke_th.iloc[20] / 2
+        correct_th = df.correct_th.iloc[10] / 2
+        repoke_th = df.repoke_th.iloc[10] / 2
     except:
         correct_th = df.correct_th.iloc[0] / 2
         repoke_th = df.repoke_th.iloc[0] / 2

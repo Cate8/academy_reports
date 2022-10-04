@@ -20,10 +20,13 @@ def ecohab_report (df, save_path):
     match_tags = []
     df['tag'] = df['RFID_detected'].apply(lambda x: x.strip("0"))  # remove final 0
 
-    for x in df.tag.unique():
+    for x in df.tag.unique(): # loop thoug all tags detected
+        n_coincidences = []
         for tag in all_ecohab_tags:  # loop thought correct tags
             if x in tag:  # check if parts of the incorrect tag coincide with real tags
-                match_tags.append(x)
+                n_coincidences.append(x)
+        if len(n_coincidences) == 1:  # check if tag detected coincides with more than one real tag, we only want 1 coincidence
+            match_tags.append(x)
 
     unique_match_tags = []  # list with the matching tags
     for x in match_tags:
@@ -44,50 +47,79 @@ def ecohab_report (df, save_path):
 
     ### add subject names column
     df['subject'] = df['tag'].replace(all_ecohab_tags, all_subjects)
+    subjects = df.subject.unique()
+    subjects.sort() #subjects list sorted
 
     ### Create a column with a colr assigned to each subject
     df['colors'] = df['subject'].replace(all_subjects, all_colors)
 
+    ### Datetime column
+    df['Datetime'] = pd.to_datetime(df['Date'] + ' ' + df['Time'])
+    # df['Datetime'] = df['Date'].str.cat(df['Time'], sep=':')
+    # df['Datetime'] = df['Datetime'].apply(lambda x: datetime.strptime(x, '%Y.%m.%d:%H:%M:%S.%f'))
+
+
+
     # Box inference
-    df['prev_antena'] = df['Antena_number'].shift()
+    subjects_df = None
+    for s in subjects:  #loop by subject to infer box properly
+        df_s = df.loc[df.subject == s]
 
-    df['box'] = None
-    df.loc[((df['Antena_number'] == 1) & (df['prev_antena'] == 1)), 'box'] = 'A'
-    df.loc[((df['Antena_number'] == 8) & (df['prev_antena'] == 8)), 'box'] = 'A'
-    df.loc[((df['Antena_number'] == 1) & (df['prev_antena'] == 8)), 'box'] = 'A'
-    df.loc[((df['Antena_number'] == 8) & (df['prev_antena'] == 1)), 'box'] = 'A'
-    df.loc[((df['Antena_number'] == 8) & (df['prev_antena'] == 7)), 'box'] = 'A'
-    df.loc[((df['Antena_number'] == 1) & (df['prev_antena'] == 2)), 'box'] = 'A'
-    df.loc[((df['Antena_number'] == 2) & (df['prev_antena'] == 2)), 'box'] = 'B'
-    df.loc[((df['Antena_number'] == 3) & (df['prev_antena'] == 3)), 'box'] = 'B'
-    df.loc[((df['Antena_number'] == 2) & (df['prev_antena'] == 3)), 'box'] = 'B'
-    df.loc[((df['Antena_number'] == 3) & (df['prev_antena'] == 2)), 'box'] = 'B'
-    df.loc[((df['Antena_number'] == 2) & (df['prev_antena'] == 1)), 'box'] = 'B'
-    df.loc[((df['Antena_number'] == 3) & (df['prev_antena'] == 4)), 'box'] = 'B'
-    df.loc[((df['Antena_number'] == 4) & (df['prev_antena'] == 4)), 'box'] = 'C'
-    df.loc[((df['Antena_number'] == 5) & (df['prev_antena'] == 5)), 'box'] = 'C'
-    df.loc[((df['Antena_number'] == 4) & (df['prev_antena'] == 5)), 'box'] = 'C'
-    df.loc[((df['Antena_number'] == 5) & (df['prev_antena'] == 4)), 'box'] = 'C'
-    df.loc[((df['Antena_number'] == 4) & (df['prev_antena'] == 3)), 'box'] = 'C'
-    df.loc[((df['Antena_number'] == 5) & (df['prev_antena'] == 6)), 'box'] = 'C'
-    df.loc[((df['Antena_number'] == 6) & (df['prev_antena'] == 6)), 'box'] = 'D'
-    df.loc[((df['Antena_number'] == 7) & (df['prev_antena'] == 7)), 'box'] = 'D'
-    df.loc[((df['Antena_number'] == 6) & (df['prev_antena'] == 7)), 'box'] = 'D'
-    df.loc[((df['Antena_number'] == 7) & (df['prev_antena'] == 6)), 'box'] = 'D'
-    df.loc[((df['Antena_number'] == 6) & (df['prev_antena'] == 5)), 'box'] = 'D'
-    df.loc[((df['Antena_number'] == 7) & (df['prev_antena'] == 8)), 'box'] = 'D'
+        df_s['next_Datetime'] = df_s.Datetime.shift(-1)
+        df_s['prev_antena'] = df_s.Antena_number.shift()
 
-    # Skipped detections: events without logic order
-    null = df.loc[df['box'].isnull()]
-    print('\n Skipped %: ' + str(round((null.shape[0] / df.shape[0]) * 100, 2)))
+        df_s.loc[(df_s.prev_antena == 2) & (df_s.Antena_number == 1), 'box'] = 'A'
+        df_s.loc[(df_s.prev_antena == 7) & (df_s.Antena_number == 8), 'box'] = 'A'
+        df_s.loc[(df_s.prev_antena == 5) & (df_s.Antena_number == 6), 'box'] = 'B'
+        df_s.loc[(df_s.prev_antena == 8) & (df_s.Antena_number == 7), 'box'] = 'B'
+        df_s.loc[(df_s.prev_antena == 3) & (df_s.Antena_number == 4), 'box'] = 'C'
+        df_s.loc[(df_s.prev_antena == 6) & (df_s.Antena_number == 5), 'box'] = 'C'
+        df_s.loc[(df_s.prev_antena == 1) & (df_s.Antena_number == 2), 'box'] = 'D'
+        df_s.loc[(df_s.prev_antena == 4) & (df_s.Antena_number == 3), 'box'] = 'D'
 
-    # Create a datetime column
-    df['Datetime'] = df['Date'].str.cat(df['Time'], sep=':')
-    df['Datetime'] = df['Datetime'].apply(lambda x: datetime.strptime(x, '%Y.%m.%d:%H:%M:%S.%f'))
+        df_s.fillna(method='ffill', inplace=True)
+        df_s['box_time'] = df_s.next_Datetime - df_s.Datetime
+
+        if subjects_df is None:
+            subjects_df = df_s
+        else:
+            subjects_df = pd.concat([subjects_df, df_s])
+
+    df=subjects_df
+
+    # df.loc[((df['Antena_number'] == 1) & (df['prev_antena'] == 1)), 'box'] = 'A'
+    # df.loc[((df['Antena_number'] == 8) & (df['prev_antena'] == 8)), 'box'] = 'A'
+    # df.loc[((df['Antena_number'] == 1) & (df['prev_antena'] == 8)), 'box'] = 'A'
+    # df.loc[((df['Antena_number'] == 8) & (df['prev_antena'] == 1)), 'box'] = 'A'
+    # df.loc[((df['Antena_number'] == 8) & (df['prev_antena'] == 7)), 'box'] = 'A'
+    # df.loc[((df['Antena_number'] == 1) & (df['prev_antena'] == 2)), 'box'] = 'A'
+    # df.loc[((df['Antena_number'] == 2) & (df['prev_antena'] == 2)), 'box'] = 'B'
+    # df.loc[((df['Antena_number'] == 3) & (df['prev_antena'] == 3)), 'box'] = 'B'
+    # df.loc[((df['Antena_number'] == 2) & (df['prev_antena'] == 3)), 'box'] = 'B'
+    # df.loc[((df['Antena_number'] == 3) & (df['prev_antena'] == 2)), 'box'] = 'B'
+    # df.loc[((df['Antena_number'] == 2) & (df['prev_antena'] == 1)), 'box'] = 'B'
+    # df.loc[((df['Antena_number'] == 3) & (df['prev_antena'] == 4)), 'box'] = 'B'
+    # df.loc[((df['Antena_number'] == 4) & (df['prev_antena'] == 4)), 'box'] = 'C'
+    # df.loc[((df['Antena_number'] == 5) & (df['prev_antena'] == 5)), 'box'] = 'C'
+    # df.loc[((df['Antena_number'] == 4) & (df['prev_antena'] == 5)), 'box'] = 'C'
+    # df.loc[((df['Antena_number'] == 5) & (df['prev_antena'] == 4)), 'box'] = 'C'
+    # df.loc[((df['Antena_number'] == 4) & (df['prev_antena'] == 3)), 'box'] = 'C'
+    # df.loc[((df['Antena_number'] == 5) & (df['prev_antena'] == 6)), 'box'] = 'C'
+    # df.loc[((df['Antena_number'] == 6) & (df['prev_antena'] == 6)), 'box'] = 'D'
+    # df.loc[((df['Antena_number'] == 7) & (df['prev_antena'] == 7)), 'box'] = 'D'
+    # df.loc[((df['Antena_number'] == 6) & (df['prev_antena'] == 7)), 'box'] = 'D'
+    # df.loc[((df['Antena_number'] == 7) & (df['prev_antena'] == 6)), 'box'] = 'D'
+    # df.loc[((df['Antena_number'] == 6) & (df['prev_antena'] == 5)), 'box'] = 'D'
+    # df.loc[((df['Antena_number'] == 7) & (df['prev_antena'] == 8)), 'box'] = 'D'
+
+    # # Skipped detections: events without logic order
+    # null = df.loc[df['box'].isnull()]
+    # print('\n Skipped %: ' + str(round((null.shape[0] / df.shape[0]) * 100, 2)))
+
 
 
     ################# RELEVANT VARIABLES ################
-    n_subjects = len(df.subject.unique())
+    n_subjects = len(subjects)
     n_days= len(df.Date.unique())
     boxes = df.box.dropna().unique().tolist()
     boxes.sort()
@@ -131,48 +163,44 @@ def ecohab_report (df, save_path):
         x_max = df['Datetime'].max() + timedelta(hours=1)
 
         #plot
-        for n, subject in enumerate(df.subject.unique()):  # loop thoug differnt subjects
+        for n, subject in enumerate(subjects):  # loop thoug differnt subjects
             axes = plt.subplot2grid((50, 50), (y, 0), rowspan=row_w, colspan=50)
-            subset = df.loc[df['subject'] == subject]
-            subset['y_order'] = subset['box'].replace(boxes, np.arange(0, n_boxes))
-            try:
-                sns.scatterplot(x='Datetime', y='y_order', data=subset, ax=axes, hue='y_order', palette=box_palette,
-                                edgecolor='none', s=8)
-            except:
-                print(subject)
-                print(subset.box.unique())
-                print(subset.y_order.unique())
-            for lines in range(len(days_at_8) - 1):
-                axes.axvspan(days_at_20[lines], days_at_8[lines + 1], facecolor='lightgray', zorder=0)
-            # axes.eventplot(days_at_8, color='black', linelengths=20, lineoffsets=0, linewidths=1)
-            # axes.eventplot(days_at_20, color='black', linelengths=20, lineoffsets=0, linewidths=1)
+            for j, box in enumerate(boxes):  # loop thoug differnt boxes
+                subset = df.loc[((df['subject'] == subject) & (df['box'] == box))]
+                axes.hlines(y=subset.box, xmin=subset.Datetime, xmax=subset.next_Datetime,
+                               color=box_palette[j]).set_linewidth(5)
+                for lines in range(len(days_at_8) - 1):
+                    axes.axvspan(days_at_20[lines], days_at_8[lines + 1], facecolor='lightgray', zorder=0)
+                # axes.eventplot(days_at_8, color='black', linelengths=20, lineoffsets=0, linewidths=1)
+                # axes.eventplot(days_at_20, color='black', linelengths=20, lineoffsets=0, linewidths=1)
 
-            #axes
-            axes.set_ylim(-1, 4)
-            axes.set_ylabel(subject)
-            axes.set_yticks([])
-            axes.set_xlim(x_min, x_max)
-            if n != 0:
-                try:
-                    axes.get_legend().remove()
-                except:
-                    pass
-                if n < len(df.subject.unique()) - 1:
+                #axes
+                axes.set_ylim(-1, 4)
+                axes.set_ylabel(subject)
+                axes.set_yticks([])
+                axes.set_xlim(x_min, x_max)
+                if n != 0:
+                    try:
+                        axes.get_legend().remove()
+                    except:
+                        pass
+                    if n < len(df.subject.unique()) - 1:
+                        axes.get_xaxis().set_visible(False)
+                else:
+                    lines = [Line2D([0], [0], color=box_palette[i], marker='o', markersize=7,
+                                     markerfacecolor=box_palette[i], linestyle=None) for i in range(len(box_palette))]
+                    axes.legend(lines, boxes, title='Box', loc='center', bbox_to_anchor=(1, 1), fontsize=6, title_fontsize=8)
                     axes.get_xaxis().set_visible(False)
-            else:
-                lines = [Line2D([0], [0], color=box_palette[i], marker='o', markersize=7,
-                                 markerfacecolor=box_palette[i], linestyle=None) for i in range(len(box_palette))]
-                axes.legend(lines, boxes, title='Box', loc='center', bbox_to_anchor=(1, 1), fontsize=6, title_fontsize=8)
-                axes.get_xaxis().set_visible(False)
 
             y=y+2
 
 
 
         ### PLOT 2: Box occupancy histograms
-        # caluclate time (hours) by subject box and date
-        group_df = df.groupby(['subject', 'box', 'Date']).agg({'Duration': 'sum', 'colors': 'max'}).reset_index()
-        group_df['hours'] = group_df['Duration'] / (1000 * 60 * 60)  # DURATION IN MS --> HOURS
+        # calculate time (hours) by subject box and date
+        group_df = df.groupby(['subject', 'box', 'Date']).agg({'box_time': 'sum', 'colors': 'max'}).reset_index()
+        group_df['sec'] = round(group_df['box_time'].dt.total_seconds())  # sec values
+        group_df['hours'] = group_df['sec'] / (60 * 60)  # hours values
 
         y = [31, 31, 41, 41]
         x = [0, 14, 0, 14]
