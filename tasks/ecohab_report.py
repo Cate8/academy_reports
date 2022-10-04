@@ -6,7 +6,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from academy_reports import utils
 from datetime import timedelta, datetime
 from matplotlib.lines import Line2D
-# from matplotlib.patches import Patch
+from matplotlib.patches import Patch
 
 
 def ecohab_report (df, save_path):
@@ -180,15 +180,10 @@ def ecohab_report (df, save_path):
                 axes.set_yticks([])
                 axes.set_xlim(x_min, x_max)
                 if n != 0:
-                    try:
-                        axes.get_legend().remove()
-                    except:
-                        pass
                     if n < len(df.subject.unique()) - 1:
                         axes.get_xaxis().set_visible(False)
                 else:
-                    lines = [Line2D([0], [0], color=box_palette[i], marker='o', markersize=7,
-                                     markerfacecolor=box_palette[i], linestyle=None) for i in range(len(box_palette))]
+                    lines = [Patch(facecolor=c, edgecolor=c) for c in box_palette]
                     axes.legend(lines, boxes, title='Box', loc='center', bbox_to_anchor=(1, 1), fontsize=6, title_fontsize=8)
                     axes.get_xaxis().set_visible(False)
 
