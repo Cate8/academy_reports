@@ -209,9 +209,16 @@ def ecohab_report (df, save_path):
             axes.set_title('Box: ' + str(box), fontsize=10, fontweight='bold', y=1.0, pad=-14)
             axes.set_xticklabels(axes.get_xticklabels(), rotation=70)
 
+
         ### PLOT 3: Antenas histogram
-        axes = plt.subplot2grid((50, 50), (31, 30), rowspan=10, colspan=10)
+        axes = plt.subplot2grid((50, 50), (31, 30), rowspan=9, colspan=14)
         sns.countplot(x='Antena_number', data=df, palette='GnBu', ax=axes)
+
+        ### PLOT 4: Antenas histogram
+        axes = plt.subplot2grid((50, 50), (41, 30), rowspan=9, colspan=14)
+        subset= df.loc[df['Datetime'] >= df['Datetime'].max()-timedelta(hours=1)]
+        sns.stripplot(x='Antena_number', y='subject', data=subset, ax=axes)
+        print( df['Datetime'].max())
 
         # SAVING AND CLOSING PAGE
         sns.despine()
