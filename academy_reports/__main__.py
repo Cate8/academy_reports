@@ -71,13 +71,15 @@ def main():
                     os.makedirs(save_directory)
 
                 # INTERSESSIONS
-                try:
-                    file_name_intersesion = subject + '_intersession.pdf'
-                    save_path_intersesion = os.path.join(save_directory, file_name_intersesion)
-                    intersession(df.copy(), save_path_intersesion)
-                except:
-                    print('Error performing the intersession')
-                    pass
+                # try:
+
+                file_name_intersesion = subject + '_intersession.pdf'
+                save_path_intersesion = os.path.join(save_directory, file_name_intersesion)
+                intersession(df.copy(), save_path_intersesion)
+
+                # except:
+                #     print('Error performing the intersession')
+                #     pass
 
                 # DAILY REPORTS
                 for sess, session in df.groupby('session'):
@@ -93,7 +95,7 @@ def main():
                     save_path = os.path.join(save_directory, file_name)
 
                     if not os.path.exists(save_path): #ONLY DONE IF NOT EXISTS
-                        try:
+                        #try:
                             if task == 'LickTeaching':
                                 lickteaching_daily(session.copy(), save_path, date)
                             elif task == 'TouchTeaching':
@@ -102,9 +104,9 @@ def main():
                                 stagetraining_daily(session.copy(), save_path, date)
                             else:
                                 print('Task not found for file:', path, 'task:', task)
-                        except:
-                            print('Error performing the intersession')
-                            pass
+                        # except:
+                        #     print('Error performing the daily report')
+                        #     pass
                     else:
                         print('Already done!')
 
@@ -124,12 +126,12 @@ def main():
     # merge different csvs
     datatype=None #gui or script
     column_names= ['Date', 'Time', 'Antena_number', 'Duration', 'RFID_detected']
-    
+
     # Data form our script
     raw_paths = utils.path_generator(settings.data_directory2, '.csv')
     datatype='script'
     # Data form their gui
-    if raw_paths == []: 
+    if raw_paths == []:
         raw_paths = utils.path_generator(settings.data_directory2, '.txt')
         datatype='gui'
     if raw_paths == []:
@@ -183,8 +185,8 @@ def main():
     #     ecohab_report(df, save_path)
     # except:
     #     print('Error performing the EcoHAB report')
-    
-    
+
+
 
 
 # MAIN

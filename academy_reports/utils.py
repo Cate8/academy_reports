@@ -2,6 +2,10 @@ import os
 import numpy as np
 import pandas as pd
 
+if 'SLACK_BOT_TOKEN' in os.environ:
+    import slack
+else:
+    print(os.environ)
 
 # GET LIST OF PATHS SORTED BY NAME
 def path_generator(path, pattern):
@@ -19,7 +23,6 @@ def convert_strings_to_lists(df, columns):
     If the csv contains a column that is ',' separated, that column is read as a string.
     We want to convert that string to a list of values. We try to make the list float or string.
     """
-
     def tolist(stringvalue):
         if isinstance(stringvalue, str):
             try:
@@ -60,13 +63,6 @@ def unnesting(df, explode):
     name = explode[0] + '_index'
     finaldf[name] = length2
 
-    # for column in finaldf.columns:
-    #     try:
-    #         if set(finaldf[column]) <= {'True', 'False', 'nan'}:
-    #             replacing = {'True': True, 'False': False, 'nan': np.nan}
-    #             finaldf[column] = finaldf[column].map(replacing)
-    #     except:
-    #         pass
     return finaldf
 
 # SUBJECT TAGS
@@ -93,11 +89,6 @@ def subjects_tags():
 
     return all_subjects, all_ecohab_tags, all_colors
 
-
-
-
-
-
 # BASAL WEIGHTS
 def relative_weights(subject, weight):
     basal_weights = {
@@ -107,7 +98,9 @@ def relative_weights(subject, weight):
     'MA6': '24.84', 'MA7': '26.48', 'MA8': '27.51', 'MA9': '24', 'MA10': '25',
     'MA11': '24.84', 'MA12': '26.48', 'MA13': '27.51', 'MA14': '24', 'MA15': '25',
     'A21':'19.77', 'A22':'20.1', 'A23':'21.1', 'A24':'22.73', 'A25':'21.3','A26':'20.4', 'A27':'21.8','A28':'22.77', 'A29':'22.8', 'A30':'24.1',
-    'A31':'21.9', 'A32':'22', 'A33':'22.1', 'A34':'26.6', 'A35':'22.5','A36':'23.2', 'A37':'21.7','A38':'22.3', 'A39':'22.6', 'A40':'21.6'}
+    'A31':'21.9', 'A32':'22', 'A33':'22.1', 'A34':'26.6', 'A35':'22.5','A36':'23.2', 'A37':'21.7','A38':'22.3', 'A39':'22.6', 'A40':'21.6',
+    'A41':'22.6', 'A42':'27.6', 'A43':'23.2', 'A44':'22.2', 'A45':'25.2','A46':'21.4', 'A47':'24.9','A48':'25.6', 'A49':'22.7', 'A50':'23.9',
+    'A51':'23.5', 'A52':'27.2'}
 
     for key, value in basal_weights.items():
         if subject == key:
@@ -160,7 +153,6 @@ def axes_pcent(axes, label_kwargs):
     """
     convert y axis form 0-1 to 0-100%
     """
-    # convert y axis form 0-1 to 0-100%
     axes.set_ylabel('Accuracy (%)', label_kwargs)
     axes.set_ylim(0, 1.1)
     axes.set_yticks(np.arange(0, 1.1, 0.1))
@@ -175,15 +167,20 @@ def chance_calculation(correct_th):
 
 # ORDER LISTS
 def order_lists(list, type):
+    '''Returns ordered lists with the differnt trial types and its corresponding colors lists'''
+    vg_c = 'MidnightBlue'
+    ds_c = 'RoyalBlue'
+    dm_c = 'CornflowerBlue'
+    dl_c = 'LightSteelBlue'
     if type == 'ttypes':
-        order = ['VG', 'WM_I', 'WM_D', 'WM_Ds', 'WM_Dm', 'WM_Dl']
-        c_order = ['#393b79', '#6b6ecf', '#9c9ede', '#9c9ede', '#ce6dbd', '#a55194']
+        order = ['VG', 'DS', 'DSc1', 'DSc2', 'DM', 'DMc1', 'DL']
+        c_order = [vg_c, ds_c, ds_c, ds_c, dm_c, dm_c, dl_c]
     elif type == 'treslts':
         order = ['correct_first', 'correct_other', 'punish', 'incorrect', 'miss']
         c_order = ['green', 'limegreen', 'firebrick', 'red', 'black']
     elif type == 'probs':
-        order = ['pvg', 'pwm_i', 'pwm_d', 'pwm_ds', 'pwm_dl']
-        c_order = ['#393b79', '#6b6ecf', '#9c9ede', '#9c9ede', '#a55194']
+        order = ['pvg', 'pds', 'pdsc1', 'pdsc2', 'pdm', 'pdmc1', 'pdl']
+        c_order = [vg_c, ds_c, ds_c, ds_c, dm_c, dm_c, dl_c]
 
     ordered_list = []
     ordered_c_list = []
@@ -192,7 +189,6 @@ def order_lists(list, type):
         if i in list:
             ordered_list.append(i)
             ordered_c_list.append(c_order[idx])
-
     return ordered_list, ordered_c_list
 
 # STATS AFTER GROUPBY FOR REPEATING BIAS CALC
@@ -204,3 +200,109 @@ def stats_function(df, groupby_list):
     stats_['norm'] = stats_['rep_boolmean'] / stats_['chancemax']  # normalize by chance
     stats_['CRB'] = stats_['norm'] - 1  # corrected repeating bias calculation
     return stats_
+
+# STIMULUS CALCULATION
+def stimulus_duration_calculation(row):
+    ''' Calculates the stimulus onset, offset and duration.
+        Extends stimulus duration adding extra time up to the maximum when necessary '''
+    if 'DS' in row['trial_type']:
+        if row['trial_type'] == 'DS':
+            stim_onset = row['STATE_Fixation1_START']
+        elif row['trial_type'] == 'DSc1':
+            stim_onset = row['STATE_Fixation3_START']
+        elif row['trial_type'] == 'DSc2':
+            stim_onset = row['STATE_Fixation2_START']
+
+        stim_offset = row['STATE_Fixation3_END']
+        stim_duration = stim_offset - stim_onset
+
+        if row['stim_dur_ds'] > 0:  # stimulus duration extended to the next state
+            stim_dur_ext = stim_duration + row['stim_dur_ds']
+            max_dur = row['response_window_end'] - stim_onset
+            if stim_dur_ext <= max_dur:  # extend when don't overcome max
+                stim_duration = stim_dur_ext
+            elif stim_dur_ext > max_dur:  # take the maximum when overcome
+                stim_duration = max_dur
+            stim_offset = stim_onset + stim_duration  # correct stimulus offset
+
+    elif 'DM' in row['trial_type']:
+        if row['trial_type'] == 'DM':
+            stim_onset = row['STATE_Fixation1_START']
+        elif row['trial_type'] == 'DMc1':
+            stim_onset = row['STATE_Fixation2_START']
+
+        stim_offset = row['STATE_Fixation2_END']
+        stim_duration = stim_offset - stim_onset
+
+        if row['stim_dur_dm'] > 0:  # stimulus duration extended to the next state
+            stim_dur_ext = stim_duration + row['stim_dur_dm']
+            max_dur = row['STATE_Fixation3_END'] - stim_onset
+            if stim_dur_ext <= max_dur:  # extend when don't overcome max
+                stim_duration = stim_dur_ext
+            elif stim_dur_ext > max_dur:  # take the maximum when overcome
+                stim_duration = max_dur
+            stim_offset = stim_onset + stim_duration  # correct stimulus offset
+
+    elif 'DL' in row['trial_type']:
+        stim_onset = row['STATE_Fixation1_START']
+        stim_offset = row['STATE_Fixation1_END']
+        stim_duration = stim_offset - stim_onset
+
+        if row['stim_dur_dl'] > 0:  # stimulus duration extended to the next state
+            stim_dur_ext = stim_duration + row['stim_dur_dl']
+            max_dur = row['STATE_Fixation2_END'] - stim_onset
+            if stim_dur_ext <= max_dur:  # extend when don't overcome max
+                stim_duration = stim_dur_ext
+            elif stim_dur_ext > max_dur:  # take the maximum when overcome
+                stim_duration = max_dur
+            stim_offset = stim_onset + stim_duration  # correct stimulus offset
+
+    elif 'VG' in row['trial_type']:
+        stim_onset = row['STATE_Fixation1_START']
+        stim_offset = row['response_window_end']
+        stim_duration = stim_offset - stim_onset
+
+    try:
+        return stim_onset, stim_duration, stim_offset
+    except:
+        return np.nan, np.nan, np.nan
+
+
+
+
+if 'SLACK_BOT_TOKEN' in os.environ:
+    def slack_spam(msg='hey buddy', filepath=None, userid='U8J8YA66S'):
+        """this sends msgs through the bot,
+        avoid spamming too much else it will get banned/timed-out"""
+        ids_dic = {
+            'jordi': 'U8J8YA66S',
+            'lejla': 'U7TTEEN4T',
+            'dani': 'UCFMZDWE8',
+            'yerko': 'UB3B8425D',
+            'carles': 'UPZPM32UC'
+        }
+
+        if (userid[0]!='U') and (userid[0]!='#'): # asumes it is a first name
+            try:
+                userid = ids_dic[userid.lower()]
+            except:
+                raise ValueError('double-check slack channel id (receiver)')
+
+        token = os.environ.get('SLACK_BOT_TOKEN')
+        if token is None:
+            print('no SLACK_BOT_TOKEN in environ')
+            raise EnvironmentError('no SLACK_BOT_TOKEN in environ')
+        else:
+            try:
+                client = slack.WebClient(token=token)
+                if (os.path.exists(filepath)) and (filepath is not None):
+                    response = client.files_upload(
+                            channels=userid,
+                            file=filepath,
+                            initial_comment=msg)
+                elif filepath is None:
+                    response = client.chat_postMessage(
+                        channel=userid,
+                        text=msg)
+            except Exception as e:
+                print(e) # perhaps prints are caught by pybpod

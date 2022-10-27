@@ -138,7 +138,9 @@ def ecohab_report (df, save_path):
         #### HEADER
         s1 = ('Subjects: ' + str(n_subjects) +
               '  /  Days: ' + str(n_days) +
-              '  /  Cages: ' + str(n_boxes) + '\n')
+              '  /  Cages: ' + str(n_boxes) +
+              '  /  Last time: ' + str(df['Datetime'].max()) +
+              '\n')
 
         axes = plt.subplot2grid((50, 50), (0, 0), rowspan=1, colspan=50)
         axes.axis('off')
@@ -213,12 +215,21 @@ def ecohab_report (df, save_path):
         ### PLOT 3: Antenas histogram
         axes = plt.subplot2grid((50, 50), (31, 30), rowspan=9, colspan=14)
         sns.countplot(x='Antena_number', data=df, palette='GnBu', ax=axes)
+        axes.set_xlabel('')
 
         ### PLOT 4: Antenas histogram
-        axes = plt.subplot2grid((50, 50), (41, 30), rowspan=9, colspan=14)
-        subset= df.loc[df['Datetime'] >= df['Datetime'].max()-timedelta(hours=1)]
+        axes = plt.subplot2grid((50, 50), (42, 30), rowspan=9, colspan=14)
+        subset= df.loc[df['Datetime'] >= df['Datetime'].max()-timedelta(hours= 1)]
         sns.stripplot(x='Antena_number', y='subject', data=subset, ax=axes)
-        print( df['Datetime'].max())
+        sub_subjects= subset.subject.unique()
+        missing_subjects=[]
+        for s in subjects:
+            if s in sub_subjects:
+                pass
+            else:
+                missing_subjects.append(s)
+        axes.set_xlabel('Antenna')
+        axes.set_title('Missing: ' + str(missing_subjects),fontsize=8, fontweight='bold')
 
         # SAVING AND CLOSING PAGE
         sns.despine()
