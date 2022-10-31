@@ -67,12 +67,18 @@ def stagetraining_daily (df, save_path, date):
         chance_lines.append(i * chance_p)
     chance_lines = [chance_lines[0], chance_lines[int(mask / 2)], chance_lines[-1]]
 
-    #BINNING
+    #BINNING:
     x_positions = df.x.unique().tolist()
     x_positions.sort()
-    l_edge = int(min(x_positions) - correct_th)
-    r_edge = int(max(x_positions) + correct_th)
-    bins_resp = np.linspace(l_edge, r_edge, len(x_positions) + 1)
+    # l_edge = int(min(x_positions) - correct_th)
+    # r_edge = int(max(x_positions) + correct_th)
+    # bins_resp = np.linspace(l_edge, r_edge, x_positions + 1)
+    if mask==3:
+        r_positions = [60, 200, 340]
+    l_edge = int(min(r_positions) - correct_th)
+    r_edge = int(max(r_positions) + correct_th)
+    bins_resp = np.linspace(l_edge, r_edge, len(r_positions) + 1)
+
 
 
     #CHECK IF REPOKING IS ALLOWED
@@ -331,7 +337,7 @@ def stagetraining_daily (df, save_path, date):
         #### PLOT 2: ACCURACY VS TRIAL TYPE
         axes = plt.subplot2grid((50, 50), (0, 40), rowspan=12, colspan=10)
         x_min = -0.5
-        x_max = len(ttypes) -0.5
+        x_max = len(ttypes_simple) -0.5
 
         if repoking_bool == True:  # add last poke
             sns.pointplot(x=last_resp_df.trial_type, y=last_resp_df.correct_bool, ax=axes, ci=68, color='black',
@@ -370,8 +376,8 @@ def stagetraining_daily (df, save_path, date):
         x_min = 0
         x_max = 400 #screen size
 
-        sns.lineplot(x='x', y="correct_bool", data=first_resp_df, hue='trial_type_simple', marker='o', markersize=8,
-                     err_style="bars", ci=68, ax=axes)
+        sns.lineplot(x='x', y="correct_bool", data=first_resp_df, hue='trial_type_simple', hue_order=ttypes_simple,
+                    marker='o', markersize=8, err_style="bars", ci=68, ax=axes)
 
         axes.hlines(y=chance_lines, xmin=x_min, xmax=x_max, color=lines_c, linestyle=':', linewidth=1)
         axes.fill_between(np.arange(x_min, x_max, 1), chance_p, 0, facecolor=lines2_c, alpha=0.2)
@@ -389,8 +395,8 @@ def stagetraining_daily (df, save_path, date):
         ### PLOT 4: ERRORS VS STIMULUS POSITION
         axes = plt.subplot2grid((50, 50), (26, 0), rowspan=11, colspan=15)
 
-        sns.lineplot(x='x', y="error_x", data=first_resp_df, hue='trial_type_simple', marker='o', markersize=8,
-                     err_style="bars", ci=68, ax=axes)
+        sns.lineplot(x='x', y="error_x", data=first_resp_df, hue='trial_type_simple',hue_order=ttypes_simple,
+                     marker='o', markersize=8, err_style="bars", ci=68, ax=axes)
 
         axes.hlines(y=[-correct_th / 2, correct_th / 2], xmin=x_min, xmax=x_max, color=lines_c, linestyle=':', linewidth=1)
         axes.set_xlabel('$Stimulus \ position\ (x_{t})\ (mm)%$', label_kwargs)
@@ -406,7 +412,7 @@ def stagetraining_daily (df, save_path, date):
             ttype_color = ttype_df.ttype_colors.iloc[0]
             hist, bins = np.histogram(ttype_df.response_x, bins=bins_resp, density=True)
             try:
-                sns.lineplot(x=x_positions, y=hist, marker='o', markersize=8, err_style="bars", color=ttype_color)
+                sns.lineplot(x=r_positions, y=hist, marker='o', markersize=8, err_style="bars", color=ttype_color)
             except:
                 pass
         axes.set_xlim(x_min, x_max)
@@ -419,18 +425,18 @@ def stagetraining_daily (df, save_path, date):
         axes_loc = [17, 28, 39]
         colspan = 10
 
-        if mask != len(x_positions):  # less than 3 choices
-            side_colors = []
-            for x in x_positions:
-                if x< 100: # Left choice
-                    side_colors.append('lightseagreen')
-                elif x >100 and x < 300: # Central choice
-                    side_colors.append('bisque')
-                elif x > 300:  # Right choice
-                    side_colors.append('orange')
+        # if mask != len(x_positions):  # less than 3 choices
+        #     side_colors = []
+        #     for x in r_positions:
+        #         if x< 100: # Left choice
+        #             side_colors.append('lightseagreen')
+        #         elif x >100 and x < 300: # Central choice
+        #             side_colors.append('bisque')
+        #         elif x > 300:  # Right choice
+        #             side_colors.append('orange')
 
         side_palette = sns.set_palette(side_colors, n_colors=len(side_colors))  # palette creation
-        first_resp_df['rt_bins'] = pd.cut(first_resp_df.response_x, bins=bins_resp, labels=x_positions,
+        first_resp_df['rt_bins'] = pd.cut(first_resp_df.response_x, bins=bins_resp, labels=r_positions,
                                           include_lowest=True)
 
         for idx in range(len(x_positions)):
@@ -446,7 +452,7 @@ def stagetraining_daily (df, save_path, date):
                     axes.set_xlabel('$Responses\ (r_{t})\ (mm)$')
 
         # legend
-        labels = list(x_positions)
+        labels = list(r_positions)
         lines = [Patch(facecolor=c, edgecolor=c) for c in side_colors]
         axes.legend(lines, labels, fontsize=8, title= 'Rt', loc='center', bbox_to_anchor=(1.1, 1))
 
@@ -459,7 +465,7 @@ def stagetraining_daily (df, save_path, date):
             y_max = 10
         sns.boxplot(x='x', y='resp_latency', hue='rt_bins', data=first_resp_df, color='white', linewidth=0.5,
                         showfliers=False, ax=axes)
-        resp_df['rt_bins'] = pd.cut(resp_df.response_x, bins=bins_resp, labels=x_positions,
+        resp_df['rt_bins'] = pd.cut(resp_df.response_x, bins=bins_resp, labels=r_positions,
                                           include_lowest=True)
         sns.stripplot(x='x', y='resp_latency', hue='rt_bins', data=resp_df, dodge=True, ax=axes)
         axes.set_ylabel("Response latency (sec)", label_kwargs)
@@ -502,7 +508,7 @@ def stagetraining_daily (df, save_path, date):
         df['stim_offset_align'] = df['stim_offset'] - df['STATE_Response_window_START']
 
         # RASTER PLOT
-        x_min = -10
+        x_min = -2
         if stage == 1:
             x_max = 30
         else:
@@ -513,11 +519,11 @@ def stagetraining_daily (df, save_path, date):
 
         sns.scatterplot(x=resp_df.reward_time, y=resp_df.trial, color=water_c, s=20, ax=axes, label='water')
         sns.scatterplot(x=resp_df.responses_time, y=resp_df.trial, hue=resp_df.response_result,
-                        style=resp_df.trial_type, s=20, ax=axes)
+                        style=resp_df.trial_type_simple, s=20, ax=axes)
         # horizontal lines
-        axes.hlines(y=df.trial, xmin=x_min, xmax=x_max, color=lines2_c, alpha=0.2, zorder=10).set_linewidth(15)  # horizontal bars each trial
+        axes.hlines(y=df.trial, xmin=x_min, xmax=x_max, color=lines2_c, alpha=0.2, zorder=10).set_linewidth(5)  # horizontal bars each trial
         axes.hlines(y=df.trial, xmin=df.stim_onset_align, xmax=df.stim_offset_align,
-                    color=lines_c, alpha=0.2, zorder=10).set_linewidth(10)
+                    color=lines_c, alpha=0.2, zorder=10).set_linewidth(5)
         axes.axvline(x=0, color=lines_c, linewidth=1.5, zorder=10)
 
         axes.set_ylim(-1, total_trials + 1)
@@ -547,9 +553,9 @@ def stagetraining_daily (df, save_path, date):
         axes = plt.subplot2grid((50, 50), (0, 26), rowspan=42, colspan=25)
         x_min = -400
         x_max = 400
-        sns.scatterplot(x=resp_df.error_x, y=resp_df.trial, hue=resp_df.response_result, style=resp_df.trial_type,
+        sns.scatterplot(x=resp_df.error_x, y=resp_df.trial, hue=resp_df.response_result, style=resp_df.trial_type_simple,
                         s=20, ax=axes, zorder=20)
-        axes.hlines(y=df.trial, xmin=x_min, xmax=x_max, color=lines2_c, alpha=0.2, zorder=10).set_linewidth(15)  # horizontal bars each trial
+        axes.hlines(y=df.trial, xmin=x_min, xmax=x_max, color=lines2_c, alpha=0.2, zorder=10).set_linewidth(5)  # horizontal bars each trial
 
         #vertical lines
         axes.axvspan(-stim_width, stim_width, color=stim_c, alpha=0.2)

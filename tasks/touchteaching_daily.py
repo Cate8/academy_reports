@@ -12,14 +12,7 @@ lines_c = 'gray'
 wmdl_c = '#a55194'
 
 # BINNING
-"""
-Touchscreen active area: 1440*900 pixels --> 403.2*252 mm
-Stimulus radius: 35pix (9.8mm)
-x_positions: 35-1405 pix --> 9.8-393.4mm
-"""
-l_edge = 9.8
-r_edge = 393.4
-bins_resp = np.linspace(l_edge, r_edge, 6)
+bins_resp=np.linspace(0, 400, 4)
 
 
 def touchteaching_daily (df, save_path, date):

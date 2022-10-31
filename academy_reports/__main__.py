@@ -3,7 +3,7 @@ from academy_reports import settings
 from academy_reports import arg
 import os
 import pandas as pd
-from datetime import datetime
+from datetime import timedelta, datetime
 from tasks.lickteaching_daily import lickteaching_daily
 from tasks.touchteaching_daily import touchteaching_daily
 from tasks.stagetraining_daily import stagetraining_daily
@@ -15,12 +15,147 @@ warnings.filterwarnings('ignore')
 
 # MAIN
 def main():
-    # VSRT REPORTS
+
+    ########################################## ECOHAB REPORTS ##########################################
+
+    # CONVERT RAW TO CLEAN CSV
+    print('-------------------------------------------')
+    print('Generating clean ecohab csvs')
+    raw_paths = utils.path_generator(settings.data_directory2, 'raw.csv')
+    if not os.path.exists(settings.data_directory2):
+        os.makedirs(settings.data_directory2)
+
+    for path in raw_paths:  # loop by different raw csv
+        clean_path = path[:-7] + "clean.csv"
+        print(clean_path)
+
+        if not os.path.exists(clean_path):  # if clean not done
+            df = pd.read_csv(path, sep='\t')
+
+            ##################### PARSE #####################
+            ### ECOHAB detects weird RDIF lectures sometimes: good lectures finish in 04 and are consistently detected
+            all_subjects, all_ecohab_tags, all_colors = utils.subjects_tags()
+
+            ### Remove aberrant detections
+            match_tags = []
+            df['tag'] = df['RFID_detected'].apply(lambda x: x.strip("0"))  # remove final 0
+
+            for x in df.tag.unique():  # loop thoug all tags detected
+                n_coincidences = []
+                for tag in all_ecohab_tags:  # loop thought correct tags
+                    if x in tag:  # check if parts of the incorrect tag coincide with real tags
+                        n_coincidences.append(x)
+                if len(
+                        n_coincidences) == 1:  # check if tag detected coincides with more than one real tag, we only want 1 coincidence
+                    match_tags.append(x)
+
+            unique_match_tags = []  # list with the matching tags
+            for x in match_tags:
+                if x not in unique_match_tags:
+                    unique_match_tags.append(x)
+
+            df = df.loc[((df['tag'].isin(match_tags)))]  # remove aberrant detections
+
+            ### Create a column containing the corrected tags
+            def tag_correction(x):
+                if len(x) < 10:
+                    for tag in all_ecohab_tags:  # loop thought correct tags
+                        if x in tag:
+                            return tag
+                else:
+                    return x
+
+            df['tag'] = df['tag'].apply(lambda x: tag_correction(x))
+
+            ### add subject names column
+            df['subject'] = df['tag'].replace(all_ecohab_tags, all_subjects)
+            subjects = df.subject.unique()
+            subjects.sort()  # subjects list sorted
+
+            ### Create a column with a colr assigned to each subject
+            df['colors'] = df['subject'].replace(all_subjects, all_colors)
+
+            ### Datetime column
+            df['Datetime'] = pd.to_datetime(df['Date'] + ' ' + df['Time'])
+
+            ### Generate clean dataframe
+            subjects_df = None
+            for s in subjects:  # loop by subject
+                df_s = df.loc[df.subject == s]
+                df_s['duration'] = timedelta(seconds=0)
+                clean_row_list = []  # create empty list
+                first = True
+
+                for index, row in df_s.iterrows():
+                    if first:  # skip first one
+                        previous_row = row
+                        first = False
+                    else:
+                        if row['Antena_number'] == previous_row['Antena_number'] and row['Datetime'] - previous_row[
+                            'Datetime'] < timedelta(seconds=2):  # same event
+                            row['duration'] = row['Datetime'] - previous_row['Datetime'] + previous_row[
+                                'duration']  # save event time
+                            previous_row = row
+                        else:  # another event (save the previous)
+                            clean_row_list.append(previous_row)
+                            previous_row = row
+
+                df_s_clean = pd.DataFrame(clean_row_list)  # convert rows to df
+
+                df_s_clean['prev_Datetime'] = df_s_clean.Datetime.shift()
+                df_s_clean['next_Datetime'] = df_s_clean.Datetime.shift(-1)
+                df_s_clean['prev_antena'] = df_s_clean.Antena_number.shift()
+                df_s_clean['next_antena'] = df_s_clean.Antena_number.shift(-1)
+
+                ### Box inference
+                df_s_clean.loc[(df_s_clean.prev_antena == 2) & (df_s_clean.Antena_number == 1), 'box'] = 'A'
+                df_s_clean.loc[(df_s_clean.prev_antena == 7) & (df_s_clean.Antena_number == 8), 'box'] = 'A'
+                df_s_clean.loc[(df_s_clean.prev_antena == 5) & (df_s_clean.Antena_number == 6), 'box'] = 'B'
+                df_s_clean.loc[(df_s_clean.prev_antena == 8) & (df_s_clean.Antena_number == 7), 'box'] = 'B'
+                df_s_clean.loc[(df_s_clean.prev_antena == 3) & (df_s_clean.Antena_number == 4), 'box'] = 'C'
+                df_s_clean.loc[(df_s_clean.prev_antena == 6) & (df_s_clean.Antena_number == 5), 'box'] = 'C'
+                df_s_clean.loc[(df_s_clean.prev_antena == 1) & (df_s_clean.Antena_number == 2), 'box'] = 'D'
+                df_s_clean.loc[(df_s_clean.prev_antena == 4) & (df_s_clean.Antena_number == 3), 'box'] = 'D'
+
+                df_s_clean.fillna(method='ffill', inplace=True)
+                df_s_clean['box_time'] = df_s_clean.next_Datetime - df_s.Datetime
+
+                if subjects_df is None:
+                    subjects_df = df_s_clean
+                else:
+                    subjects_df = pd.concat([subjects_df, df_s_clean])
+
+            ### save clean df
+            subjects_df.to_csv(clean_path, sep=';')
+
+    # MERGE CLEAN CSVS
+    clean_paths = utils.path_generator(settings.data_directory2, 'clean.csv')
+    dfs = []
+    for path in clean_paths:  # loop by different clean csvs
+        df = pd.read_csv(path, sep=';')
+        dfs.append(df)
+
+        global_ecoh_df = pd.concat(dfs)
+        utils.create_csv(global_ecoh_df, settings.data_directory2 + 'global_ecoh.csv')
+
+    # MAKE THE REPORT
+    print('Making Ecohab report')
+    date_s = global_ecoh_df.Date.iloc[0]
+    date_e = global_ecoh_df.Date.iloc[-1]
+    print('From ' + str(date_s))
+    print('To ' + str(date_e))
+    file_name = 'Ecohab_report_' + date_s.replace('.', '') + '_' + date_e.replace('.', '') + '.pdf'
+    save_path = os.path.join(settings.save_directory2, file_name)
+    ecohab_report(global_ecoh_df, save_path)
+
+    #################################### DAILY & INTERSESSIONS ####################################
+    print('')
+    print('Generating dailies')
+
     try:
         path = arg.file[0]
         file_name = os.path.basename(path)
         file_name = file_name.split(".")[0]
-        print('making report for', file_name)
 
         df = pd.read_csv(path, sep=';')
 
@@ -72,11 +207,9 @@ def main():
 
                 # INTERSESSIONS
                 # try:
-
                 file_name_intersesion = subject + '_intersession.pdf'
                 save_path_intersesion = os.path.join(save_directory, file_name_intersesion)
                 intersession(df.copy(), save_path_intersesion)
-
                 # except:
                 #     print('Error performing the intersession')
                 #     pass
@@ -121,72 +254,6 @@ def main():
 
         except:
             pass
-
-    # ECOHAB REPORTS
-    # merge different csvs
-    datatype=None #gui or script
-    column_names= ['Date', 'Time', 'Antena_number', 'Duration', 'RFID_detected']
-
-    # Data form our script
-    raw_paths = utils.path_generator(settings.data_directory2, '.csv')
-    datatype='script'
-    # Data form their gui
-    if raw_paths == []:
-        raw_paths = utils.path_generator(settings.data_directory2, '.txt')
-        datatype='gui'
-    if raw_paths == []:
-        print('No files found')
-
-    if not os.path.exists(settings.data_directory2):
-        os.makedirs(settings.data_directory2)
-
-    dfs = []
-    for path in raw_paths:
-        if datatype =='script':
-            df = pd.read_csv(path, sep='\t')
-            # Calculate the event duration column (ms)
-            df['times'] = pd.to_timedelta(df.Time)
-            df['Duration'] = df['times'] - df['times'].shift()
-            df['Duration'] = round(df['Duration'].dt.total_seconds() * 1000) # ms values
-            # #correct changes of day
-            day_ms = 24 * 60 * 60 * 1000
-            df.loc[df['Duration'] < 0, 'Duration'] = df['Duration'] + day_ms
-            #select columns of interest
-            df=df[column_names]
-            dfs.append(df)
-
-        elif datatype =='gui':
-            df = pd.read_csv(path, sep='\t', names=column_names)
-            dfs.append(df)
-
-        else:
-            print('weird datatype')
-
-    print(raw_paths)
-
-    merged_df = pd.concat(dfs)
-    save_directory2 = os.path.join(settings.save_directory2)
-    if not os.path.exists(save_directory2):
-        os.makedirs(save_directory2)
-    utils.create_csv(merged_df, save_directory2 + 'merged_df.csv')
-
-    # Make the report
-    print('-----------------------------------------------------------------')
-    print('Making Ecohab report')
-    date_s=merged_df.Date.iloc[0]
-    date_e=merged_df.Date.iloc[-1]
-    print('From '+str(date_s))
-    print('To '+str(date_e))
-
-    file_name = 'Ecohab_report_' + date_s.replace('.','') + '_' + date_e.replace('.','') + '.pdf'
-    save_path = os.path.join(save_directory2, file_name)
-    ecohab_report(merged_df, save_path)
-    # try:
-    #     ecohab_report(df, save_path)
-    # except:
-    #     print('Error performing the EcoHAB report')
-
-
 
 
 # MAIN
