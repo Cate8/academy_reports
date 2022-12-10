@@ -150,9 +150,9 @@ def ecohab_report (df, save_path):
         row_w = int(30 / n_subjects)
         y = 0
 
-        sns.set(style="whitegrid")
-        paper_rc = {'lines.markersize': 2}
-        sns.set_context("paper", rc=paper_rc)
+        # sns.set(style="whitegrid")
+        # paper_rc = {'lines.markersize': 2}
+        # sns.set_context("paper", rc=paper_rc)
 
         # plot
         for n, subject in enumerate(subjects):  # loop thoug differnt subjects

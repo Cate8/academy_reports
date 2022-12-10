@@ -136,7 +136,7 @@ def main():
         dfs.append(df)
 
         global_ecoh_df = pd.concat(dfs)
-        utils.create_csv(global_ecoh_df, settings.data_directory2 + 'global_ecoh.csv')
+        utils.create_csv(global_ecoh_df, settings.data_directory2 + '/global_ecoh.csv')
 
     # MAKE THE REPORT
     print('Making Ecohab report')
@@ -228,7 +228,6 @@ def main():
                     save_path = os.path.join(save_directory, file_name)
 
                     if not os.path.exists(save_path): #ONLY DONE IF NOT EXISTS
-                        #try:
                             if task == 'LickTeaching':
                                 lickteaching_daily(session.copy(), save_path, date)
                             elif task == 'TouchTeaching':
@@ -237,23 +236,18 @@ def main():
                                 stagetraining_daily(session.copy(), save_path, date)
                             else:
                                 print('Task not found for file:', path, 'task:', task)
-                        # except:
-                        #     print('Error performing the daily report')
-                        #     pass
+
                     else:
                         print('Already done!')
 
         # GLOBAL DF
-        try:
-            global_df = pd.concat(dfs)
-            save_directory = os.path.join(settings.save_directory)
-            if not os.path.exists(save_directory):
-                os.makedirs(save_directory)
-            utils.create_csv(global_df, save_directory + 'global_trials.csv')
-            print('END!')
-
-        except:
-            pass
+        print('Generating global df')
+        global_df = pd.concat(dfs)
+        save_directory = os.path.join(settings.save_directory)
+        if not os.path.exists(save_directory):
+            os.makedirs(save_directory)
+        utils.create_csv(global_df, save_directory + '/global_trials.csv')
+        print('END!')
 
 
 # MAIN
