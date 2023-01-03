@@ -219,10 +219,14 @@ def main():
                     subject = session.subject.iloc[0]
                     task = session.task.iloc[0]
                     stage = session.stage.iloc[0]
-                    date = datetime.fromtimestamp(session.STATE_Start_task_START.iloc[0]).strftime("%Y%m%d-%H%M%S")
+                    try:
+                        date = datetime.fromtimestamp(session.STATE_Start_task_START.iloc[0]).strftime("%Y%m%d-%H%M%S")
+                        print(date)
+                    except:
+                        bad_date=session.STATE_Start_task_START.iloc[0]
+                        print(bad_date)
                     print(task[0:13])
                     print(sess)
-                    print(date)
 
                     file_name = subject + '_' + task + '-' + str(stage) + '_' + date + '.pdf'
                     save_path = os.path.join(save_directory, file_name)
