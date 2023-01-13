@@ -160,6 +160,9 @@ def axes_pcent(axes, label_kwargs):
 
 # CHANCE CALCULATION
 def chance_calculation(correct_th):
+    """
+    calculates chance baseline considering the number of possible responses
+    """
     screen_size = 1440 * 0.28
     chance = correct_th*2 / screen_size
     return chance

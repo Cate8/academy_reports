@@ -7,6 +7,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from academy_reports import utils
 from datetime import timedelta
 from scipy import  stats
+import matplotlib.dates as mdates
 
 # PLOT COLORS
 correct_first_c = 'green'
@@ -100,9 +101,10 @@ def intersession(df, save_path_intersesion):
 
         # categorize stimulus positions and respsonses
         bins = pd.IntervalIndex.from_tuples([(25, 105), (160, 240), (295, 375)])
-        labels = [-1, 0, 1]
-        df['r_c'] = pd.cut(df['response_first'], bins).map(dict(zip(bins, labels)))
-        df['x_c'] = pd.cut(df['x'], bins).map(dict(zip(bins, labels)))
+        x_cats = [-1, 0, 1]
+        x_tags = ['L', 'C', 'R']
+        df['r_c'] = pd.cut(df['response_first'], bins).map(dict(zip(bins, x_cats)))
+        df['x_c'] = pd.cut(df['x'], bins).map(dict(zip(bins, x_cats)))
 
         ## previous stim, resp and outcome
         df['prev_x_c'] = df['x_c'].shift(1)
@@ -119,7 +121,7 @@ def intersession(df, save_path_intersesion):
         df['reward_time'] = df['STATE_Correct_first_reward_START'].fillna(0) + df[
             'STATE_Correct_other_reward_START'].fillna(0) + df['STATE_Miss_reward_START'].fillna(0)
 
-        df['resp_latency'] = df['response_window_end'] - df['STATE_Response_window_START']
+        df['resp_latency'] = df['response_window_end'] - df['STATE_Response_window_START'] # resp window first
         df['lick_latency'] = df['reward_time'] - df['response_window_end']
 
         # CALCULATE STIMULUS DURATION &  DELAY
@@ -167,6 +169,14 @@ def intersession(df, save_path_intersesion):
             axes.xaxis.set_ticklabels([])
             axes.legend(title='Stage', fontsize=8, loc='center', bbox_to_anchor=(0.15, 1.2))
 
+            # legend water drunk
+            daily_df = df.groupby(['day', 'session']).agg({'reward_drunk': max, 'stage': max}).reset_index()
+            reward_df = daily_df.groupby(['day']).agg({'reward_drunk': sum}).reset_index()
+            label = 'Water Today: ' + str(reward_df.reward_drunk.iloc[-1]) + 'ul, Yesterday: ' + str(
+                reward_df.reward_drunk.iloc[-2]) + 'ul, Prev: ' + str(reward_df.reward_drunk.iloc[-3]) + 'ul'
+            axes.text(0.25, 1.2, label, transform=axes.transAxes, fontsize=8, fontweight='bold',
+                      verticalalignment='top')
+
 
             ### PLOT 2: RELATIVE WEIGHTS
             axes = plt.subplot2grid((50, 50), (0, 27), rowspan=5, colspan=24)
@@ -177,39 +187,26 @@ def intersession(df, save_path_intersesion):
             axes.set_ylim(70, 150)
             axes.set_xlabel('')
             axes.xaxis.set_ticklabels([])
-
-            # axes.get_xaxis().set_ticks([])
             axes.get_legend().remove()
 
             label = 'Last: ' + str(weight) + ' g'
-            axes.text(1, 0.95, label, transform=axes.transAxes, fontsize=8,  fontweight='bold', verticalalignment='top')
+            axes.text(1, 1.2, label, transform=axes.transAxes, fontsize=8,  fontweight='bold', verticalalignment='top')
 
 
-            ### PLOT 3:  WATER DRUNK
+            ### PLOT 3:  NUMBER OF SESSIONS
             axes = plt.subplot2grid((50, 50), (6, 0), rowspan=5, colspan=24)
 
-            grouped_df= df.groupby(['day', 'session']).agg({'reward_drunk': max, 'stage': max}).reset_index()
-            sns.lineplot(x='day', y='reward_drunk', style='stage', markers=True, ax=axes, color='black', data=grouped_df,
-                         estimator=sum, ci=None)
+            sessions_df = df.groupby(['day']).agg({'session': 'nunique', 'stage': max}).reset_index()
+            sns.lineplot(x='day', y='session', style='stage', markers=True, ax=axes, color='black', data=sessions_df)
+            axes.axhline(y=3,color=lines_c, linestyle=':', linewidth=1)
 
-            axes.axhline(y=800, color=lines_c, linestyle=':', linewidth=1)
-            axes.set_ylabel('Water drunk (ul)', label_kwargs)
-            axes.set_ylim(0, 2000)
+            axes.set_ylabel('Nº of sessions', label_kwargs)
             axes.set_xlabel('')
             axes.get_legend().remove()
 
-            label = 'Last: ' + str(df.reward_drunk.iloc[-1]) + ' ul'
-            axes.text(0.15, 0.95, label, transform=axes.transAxes, fontsize=8, fontweight='bold', verticalalignment='top')
-
-            xticks = axes.get_xticks()
-            xtime = df.date_day.unique()
-            div = int(len(xtime) / len(xticks))
-            if div == 0:
-                div = 1
-            xtime2 = []
-            for i in range(0, len(xtime), div):
-                xtime2.append(xtime[i])
-            axes.set_xticklabels(xtime2, rotation=40)
+            axes.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
+            for label in axes.get_xticklabels(which='major'):
+                label.set(rotation=40)
 
 
             ### PLOT 4: LATENCIES
@@ -218,7 +215,6 @@ def intersession(df, save_path_intersesion):
 
             subset= df.loc[((df['trial_result']== 'correct_first') | (df['trial_result']== 'correct_other') | (df['trial_result']== 'punish'))]
 
-            ### lick latency plot
             axes = plt.subplot2grid((50, 50), (6, 27), rowspan=5, colspan=24)
             ymax = subset.lick_latency.median()+10
             sns.lineplot(x='day', y='lick_latency', hue='trial_result', hue_order=treslt_order, style='stage', data=subset,
@@ -227,21 +223,16 @@ def intersession(df, save_path_intersesion):
             axes.set_ylabel('Lick latency(s)', label_kwargs)
             axes.set_ylim(0, ymax)
             axes.set_xlabel('')
-            axes.set_xticklabels(xtime2, rotation=40)
+            axes.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
+            for label in axes.get_xticklabels(which='major'):
+                label.set(rotation=40)
+
             # legend
             axes.get_legend().remove()
             lines = [Line2D([0], [0], color=treslt_palette[i], marker='o', markersize=7, markerfacecolor=treslt_palette[i])
                      for i in range(len(treslt_palette))]
             axes.legend(lines, treslt_order, title='Trial result', fontsize=8, loc='center', bbox_to_anchor=(1.1, 0.7))
 
-            ### response latency plot
-            # ymax= subset.resp_latency.median()+5
-            # sns.lineplot(x='day', y='resp_latency', hue='trial_result', hue_order=treslt_order, style='stage', data=subset,
-            #              markers=True, ax=axes, estimator=np.median, palette = treslt_palette)
-            # axes.set_ylabel('Response latency(s)', label_kwargs)
-            # axes.set_xlabel('')
-            # axes.set_ylim(0, ymax)
-            # axes.get_legend().remove()
 
             ### PLOT 5: TTYPE ACCURACIES
             axes = plt.subplot2grid((50, 50), (14, 0), rowspan=8, colspan=50)
@@ -260,13 +251,13 @@ def intersession(df, save_path_intersesion):
             sns.lineplot(x='day', y='correct_bool', hue='trial_type_simple', hue_order=ttype_order, palette=ttype_palette,
                     style='stage', markers=True, ax=axes, data=df, ci=68)
 
-            axes.axhline(y=chance, color=lines_c, linestyle=':', linewidth=1)
+            axes.hlines(y=[chance], xmin=df.day.min(), xmax=df.day.max(), color=lines_c, linestyle=':', linewidth=1)
             axes.fill_between(df.day, df.chance, 0, facecolor=lines2_c, alpha=0.3)
             utils.axes_pcent(axes, label_kwargs)
 
             axes.get_legend().remove()
             axes.set_xlabel('')
-            axes.set_xticklabels(xtime)
+            axes.set(xticklabels=[])
 
             # legend
             lines = [Line2D([0], [0], color=ttype_palette[i], marker='o', markersize=7, markerfacecolor=ttype_palette[i])
@@ -281,24 +272,31 @@ def intersession(df, save_path_intersesion):
             axes_loc = [22, 27, 32]
             rowspan = 5
             side_palette = sns.set_palette(side_colors, n_colors=len(side_colors))  # palette creation
-            # x_min = df.day.min()
-            # x_max = df.day.max()
 
-            for idx, x in enumerate(labels):
+            for idx, x in enumerate(x_cats):
                 axes = plt.subplot2grid((50, 50), (axes_loc[idx], 0), rowspan=rowspan, colspan=50)
                 subset = df.loc[df['x_c'] == x]
                 try:
-                    sns.countplot(subset.day, hue =subset.r_c, ax=axes, palette=side_colors)
+                    subset = subset.groupby('day')['r_c'].value_counts(normalize=True).reset_index()
+                    subset.rename(columns={'r_c': 'normalized'}, inplace=True)
+                    subset.rename(columns={'level_1': 'r_c'}, inplace=True)
+                    sns.barplot(x=subset.day, y=subset.normalized, hue=subset.r_c, ax=axes, palette=side_colors)
                     axes.set_xlabel('Time (Month/Day)')
-                    axes.set_ylabel('$x_{t}\ :%$' + str(x))
+                    axes.set_ylabel('$x_{t}\ :%$' + str(x_tags[idx]))
+                    axes.set_ylim(0, 1.1)
+                    axes.set_yticks(np.arange(0, 1.1, 0.5))
+                    # axes.set_yticklabels(['0', '', '', '', '', '50', '', '', '', '', '100'])
                     #legend
-                    if idx != len(labels)-1:
+                    if idx != len(x_cats)-1:
                         axes.xaxis.set_ticklabels([])
                         axes.set_xlabel('')
                         axes.get_legend().remove()
                     else:
-                        axes.legend(loc='center', bbox_to_anchor=(1.05, 1.5), title= '$r_{t}\ :%$')
-                        # axes.set_xticklabels(xtime)
+                        handles, labels = axes.get_legend_handles_labels()
+                        axes.legend(handles, x_tags, loc='center', bbox_to_anchor=(1.05, 1.5), title= '$r_{t}\ :%$')
+                        # axes.legend(labels=x_tags, loc='center', bbox_to_anchor=(1.05, 1.5), title= '$r_{t}\ :%$')
+                        axes.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
+
 
                 except:
                     pass
@@ -307,11 +305,19 @@ def intersession(df, save_path_intersesion):
             # LAST ROW PLOTS ONLY 5 DAYS
             df = df.loc[df['day'] > df.day.max() - timedelta(days=5)]
 
-
             ## PLOT 7: ACC TRIAL TYPE
             axes = plt.subplot2grid((50, 50), (39, 0), rowspan=11, colspan=10)
             x_min = -0.5
             x_max = len(ttype_order) - 0.5
+
+            grouped_df = df.groupby('trial_type').agg({'correct_bool': 'mean', 'trial_type_simple': max}).reset_index()
+            sns.stripplot(x='trial_type_simple', y='correct_bool', data=grouped_df, order=ttype_order,
+                          hue="trial_type",
+                          jitter=False, size=4, palette='Greys')  # split controls
+            try:
+                sns.legend.remove()
+            except:
+                pass
 
             sns.pointplot(x='trial_type_simple', y='correct_bool_last', order=ttype_order, ax=axes, s=100, ci=68,
                           color='black', linestyles=["--"], data=df)
@@ -376,15 +382,18 @@ def intersession(df, save_path_intersesion):
 
             #### PLOT 10: CUMULATIVE TRIAL RATE
             axes = plt.subplot2grid((50, 50), (39, 36), rowspan=11, colspan=14)
+
+            df['start_session'] = df.groupby(['subject', 'session'])['STATE_Start_task_START'].transform('min')
+            df['end_session'] = df.groupby(['subject', 'session'])['STATE_Exit_END'].transform('max')
+            df['session_lenght'] = (df['end_session'] - df['start_session']) / 60
             df['current_time'] = df.groupby(['subject', 'session'])['STATE_Start_task_START'].apply(lambda x: (x - x.iloc[0]) / 60)  # MINS
-            bins_timing = 60
-            max_timing = 50
+            max_timing = round(df['session_lenght'].max())
             sess_palette= sns.color_palette('Purples', 5)  # color per day
 
             for idx, day in enumerate(df.day.unique()):
                 subset = df.loc[df['day'] == day]
                 n_sess = len(subset.session.unique())
-                hist_ = stats.cumfreq(subset.current_time, numbins=bins_timing, defaultreallimits=(0, max_timing), weights=None)
+                hist_ = stats.cumfreq(subset.current_time, numbins=max_timing, defaultreallimits=(0, subset.current_time.max()), weights=None)
                 hist_norm = hist_.cumcount / n_sess
                 bins_plt = hist_.lowerlimit + np.linspace(0, hist_.binsize * hist_.cumcount.size, hist_.cumcount.size)
                 sns.lineplot(bins_plt, hist_norm, color=sess_palette[idx], ax=axes, marker='o', markersize=4)
@@ -396,44 +405,6 @@ def intersession(df, save_path_intersesion):
             lines = [Line2D([0], [0], color=sess_palette[i], marker='o', markersize=7, markerfacecolor=sess_palette[i]) for i in
                      range(len(sess_palette))]
             axes.legend(lines, np.arange(-5, 0, 1), title='Days',  loc='center', bbox_to_anchor=(0.1, 0.85))
-
-            # REPEATING BIAS PLOT
-            # subset = df.loc[df['trial'] > 10] #remove first trials
-            # subset = subset.loc[((subset['trial_result'] != 'miss') & (subset['prev_result'] != 'miss'))] # remove misses
-            #
-            # columns = ['subject', 'prev_result']
-            #
-            # RBl = (subset.loc[((subset.r_c == -1) & (subset.prev_r_c == -1))].groupby(columns)['valids'].sum() /
-            #        subset.loc[(df.r_c == -1)].groupby(columns)['valids'].sum()).reset_index()
-            # RBc = (subset.loc[((subset.r_c == 0) & (subset.prev_r_c == 0))].groupby(columns)['valids'].sum() /
-            #        subset.loc[(df.r_c == 0)].groupby(columns)['valids'].sum()).reset_index()
-            # RBr = (subset.loc[((subset.r_c == 1) & (subset.prev_r_c == 1))].groupby(columns)['valids'].sum() /
-            #        subset.loc[(df.r_c == 1)].groupby(columns)['valids'].sum()).reset_index()
-            # RBl.rename(columns={'valids': 'RBl'}, inplace=True)
-            # RBc.rename(columns={'valids': 'RBc'}, inplace=True)
-            # RBr.rename(columns={'valids': 'RBr'}, inplace=True)
-            #
-            # to_plot = pd.concat([RBl, RBc, RBr], axis=1)
-            # to_plot = to_plot.loc[:, ~to_plot.columns.duplicated()]
-            # to_plot['RB'] = (to_plot['RBl'] + to_plot['RBc'] + to_plot['RBr']) / 3
-            #
-            # # plot parameters
-            # treslt_palette = [correct_first_c, punish_c]
-            # treslt_order = ['correct_first', 'punish']
-            # treslt_labels = ['C', 'P']
-            # if df.stage.max == 1:
-            #     treslt_labels = ['C_f', 'C_o', 'P']
-            #     treslt_palette = [correct_first_c, correct_other_c, punish_c]
-            #     treslt_order = ['correct_first', 'correct_other', 'punish']
-            #
-            # sns.stripplot(x='prev_result', y='RB', order=treslt_order, data=to_plot, ax=axes, size=8,
-            #               palette=treslt_palette,  split=True, alpha=0.7)
-            #
-            # # plt.setp(ax.lines, color=".4")
-            # axes.axhline(y=chance, color=lines_c, linestyle=':', linewidth=2)
-            # axes.set_ylabel('Repeating Bias',label_kwargs)
-            # axes.set_xlabel('Prev. outcome')
-            # axes.set_xticklabels(treslt_labels)
 
 
             # SAVING AND CLOSING PAGE
