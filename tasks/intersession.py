@@ -249,7 +249,7 @@ def intersession(df, save_path_intersesion):
                 del ttype_palette[i]
 
             sns.lineplot(x='day', y='correct_bool', hue='trial_type_simple', hue_order=ttype_order, palette=ttype_palette,
-                    style='stage', markers=True, ax=axes, data=df, ci=68)
+                    style='stage', markers=True, ax=axes, data=df, ci=None)
 
             axes.hlines(y=[chance], xmin=df.day.min(), xmax=df.day.max(), color=lines_c, linestyle=':', linewidth=1)
             axes.fill_between(df.day, df.chance, 0, facecolor=lines2_c, alpha=0.3)
@@ -276,30 +276,26 @@ def intersession(df, save_path_intersesion):
             for idx, x in enumerate(x_cats):
                 axes = plt.subplot2grid((50, 50), (axes_loc[idx], 0), rowspan=rowspan, colspan=50)
                 subset = df.loc[df['x_c'] == x]
-                try:
-                    subset = subset.groupby('day')['r_c'].value_counts(normalize=True).reset_index()
-                    subset.rename(columns={'r_c': 'normalized'}, inplace=True)
-                    subset.rename(columns={'level_1': 'r_c'}, inplace=True)
-                    sns.barplot(x=subset.day, y=subset.normalized, hue=subset.r_c, ax=axes, palette=side_colors)
-                    axes.set_xlabel('Time (Month/Day)')
-                    axes.set_ylabel('$x_{t}\ :%$' + str(x_tags[idx]))
+                try: # works in my PC not in the setup
+                    subset2=subset.groupby('day')['r_c'].value_counts(normalize=True).reset_index(name='value')
+                    sns.barplot(x=subset2.day, y=subset2.value, hue=subset2.r_c, ax=axes, palette=side_colors)
                     axes.set_ylim(0, 1.1)
                     axes.set_yticks(np.arange(0, 1.1, 0.5))
-                    # axes.set_yticklabels(['0', '', '', '', '', '50', '', '', '', '', '100'])
-                    #legend
-                    if idx != len(x_cats)-1:
-                        axes.xaxis.set_ticklabels([])
-                        axes.set_xlabel('')
-                        axes.get_legend().remove()
-                    else:
-                        handles, labels = axes.get_legend_handles_labels()
-                        axes.legend(handles, x_tags, loc='center', bbox_to_anchor=(1.05, 1.5), title= '$r_{t}\ :%$')
-                        # axes.legend(labels=x_tags, loc='center', bbox_to_anchor=(1.05, 1.5), title= '$r_{t}\ :%$')
-                        axes.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
-
-
                 except:
-                    pass
+                    sns.countplot(subset.day, hue =subset.r_c, ax=axes, palette=side_colors)
+
+                axes.set_xlabel('Time (Month/Day)')
+                axes.set_ylabel('$x_{t}\ :%$' + str(x_tags[idx]))
+
+                #legend
+                if idx != len(x_cats)-1:
+                    axes.xaxis.set_ticklabels([])
+                    axes.set_xlabel('')
+                    axes.get_legend().remove()
+                else:
+                    handles, labels = axes.get_legend_handles_labels()
+                    axes.legend(handles, x_tags, loc='center', bbox_to_anchor=(1.05, 1.5), title= '$r_{t}\ :%$')
+                    axes.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
 
 
             # LAST ROW PLOTS ONLY 5 DAYS
@@ -388,12 +384,16 @@ def intersession(df, save_path_intersesion):
             df['session_lenght'] = (df['end_session'] - df['start_session']) / 60
             df['current_time'] = df.groupby(['subject', 'session'])['STATE_Start_task_START'].apply(lambda x: (x - x.iloc[0]) / 60)  # MINS
             max_timing = round(df['session_lenght'].max())
+            max_timing = int(max_timing)
             sess_palette= sns.color_palette('Purples', 5)  # color per day
 
             for idx, day in enumerate(df.day.unique()):
                 subset = df.loc[df['day'] == day]
                 n_sess = len(subset.session.unique())
-                hist_ = stats.cumfreq(subset.current_time, numbins=max_timing, defaultreallimits=(0, subset.current_time.max()), weights=None)
+                try:
+                    hist_ = stats.cumfreq(subset.current_time, numbins=max_timing, defaultreallimits=(0, subset.current_time.max()), weights=None)
+                except:
+                    hist_ = stats.cumfreq(subset.current_time, numbins=max_timing, defaultreallimits=(0, max_timing), weights=None)
                 hist_norm = hist_.cumcount / n_sess
                 bins_plt = hist_.lowerlimit + np.linspace(0, hist_.binsize * hist_.cumcount.size, hist_.cumcount.size)
                 sns.lineplot(bins_plt, hist_norm, color=sess_palette[idx], ax=axes, marker='o', markersize=4)
