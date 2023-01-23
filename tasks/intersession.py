@@ -172,8 +172,11 @@ def intersession(df, save_path_intersesion):
             # legend water drunk
             daily_df = df.groupby(['day', 'session']).agg({'reward_drunk': max, 'stage': max}).reset_index()
             reward_df = daily_df.groupby(['day']).agg({'reward_drunk': sum}).reset_index()
-            label = 'Water Today: ' + str(reward_df.reward_drunk.iloc[-1]) + 'ul, Yesterday: ' + str(
-                reward_df.reward_drunk.iloc[-2]) + 'ul, Prev: ' + str(reward_df.reward_drunk.iloc[-3]) + 'ul'
+            try:
+                label = 'Water Today: ' + str(reward_df.reward_drunk.iloc[-1]) + 'ul, Yesterday: ' + str(
+                    reward_df.reward_drunk.iloc[-2]) + 'ul, Prev: ' + str(reward_df.reward_drunk.iloc[-3]) + 'ul'
+            except:
+                label = 'Water Today: ' + str(reward_df.reward_drunk.iloc[-1])
             axes.text(0.25, 1.2, label, transform=axes.transAxes, fontsize=8, fontweight='bold',
                       verticalalignment='top')
 
@@ -341,6 +344,7 @@ def intersession(df, save_path_intersesion):
 
             subset['delay_bins'] =pd.qcut(subset.delay_total, 8, duplicates='drop')
             subset['delay_labels'] = subset.apply(lambda x: x['delay_bins'].mid, axis=1)
+
             sns.lineplot(x='delay_labels', y='correct_bool', ax=axes, data=subset, ci=68, marker='o', err_style="bars",
                          markersize=7, hue='trial_type_simple', hue_order=ttype_order, palette=ttype_palette)
 
