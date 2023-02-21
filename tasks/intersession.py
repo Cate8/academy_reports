@@ -341,20 +341,24 @@ def intersession(df, save_path_intersesion):
             axes = plt.subplot2grid((50, 50), (39, 10), rowspan=11, colspan=14)
             x_max = 5
             subset = df.loc[df['delay_total']<x_max]
+            subset['delay_bins'] = pd.qcut(subset.delay_total, 8, duplicates='drop')
+            try:
+                subset['delay_labels'] = subset.apply(lambda x: x['delay_bins'].mid, axis=1)
+                sns.lineplot(x='delay_labels', y='correct_bool', ax=axes, data=subset, ci=68, marker='o',
+                             err_style="bars",
+                             markersize=7, hue='trial_type_simple', hue_order=ttype_order, palette=ttype_palette)
+                axes.hlines(y=[chance], xmin=x_min, xmax=x_max, color=lines_c, linestyle=':', linewidth=1)
+                axes.fill_between(np.linspace(x_min, x_max, 2), chance, 0, facecolor=lines2_c, alpha=0.3)
+                axes.set_xlabel('Delay total (sec)', label_kwargs)
+                utils.axes_pcent(axes, label_kwargs)
+                axes.yaxis.set_ticklabels([])
+                axes.set_ylabel('')
+                axes.get_legend().remove()
+            except:
+                axes.yaxis.set_ticklabels([])
+                axes.xaxis.set_ticklabels([])
+                pass
 
-            subset['delay_bins'] =pd.qcut(subset.delay_total, 8, duplicates='drop')
-            subset['delay_labels'] = subset.apply(lambda x: x['delay_bins'].mid, axis=1)
-
-            sns.lineplot(x='delay_labels', y='correct_bool', ax=axes, data=subset, ci=68, marker='o', err_style="bars",
-                         markersize=7, hue='trial_type_simple', hue_order=ttype_order, palette=ttype_palette)
-
-            axes.hlines(y=[chance], xmin=x_min, xmax=x_max, color=lines_c, linestyle=':', linewidth=1)
-            axes.fill_between(np.linspace(x_min, x_max, 2), chance, 0, facecolor=lines2_c, alpha=0.3)
-            axes.set_xlabel('Delay total (sec)', label_kwargs)
-            utils.axes_pcent(axes, label_kwargs)
-            axes.yaxis.set_ticklabels([])
-            axes.set_ylabel('')
-            axes.get_legend().remove()
 
 
             #### PLOT 9: ACCURACY VS STIMULUS POSITION
