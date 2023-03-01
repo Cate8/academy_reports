@@ -243,12 +243,15 @@ def stagetraining_daily (df, save_path, date):
             hlines = [0.4, 0.3, 0.2, 0.1, 0]
             color = ds_c            #substage 1 --> reduce DS stim extension
             var = 'stim_dur_ds'
-            if substage == 2:       #substage 2 --> reduce DM stim extension
-                color = dm_c
-                var = 'stim_dur_dm'
-            elif substage == 3:     #substage 3 --> reduce DM stim extension
-                color = dl_c
-                var = 'stim_dur_dl'
+            if df['task'].str.contains('StageTraining_8B').any():
+                pass
+            else:
+                if substage == 2:       #substage 2 --> reduce DM stim extension
+                    color = dm_c
+                    var = 'stim_dur_dm'
+                elif substage == 3:     #substage 3 --> reduce DM stim extension
+                    color = dl_c
+                    var = 'stim_dur_dl'
 
             sns.lineplot(x=first_resp_df.trial, y=first_resp_df[var], ax=axes, color=color) #marker='o'
             axes.hlines(y=hlines, xmin=min(first_resp_df.trial), xmax=max(first_resp_df.trial), color=lines2_c, linestyle=':', linewidth=1)
