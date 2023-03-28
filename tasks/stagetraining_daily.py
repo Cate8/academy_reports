@@ -65,14 +65,11 @@ def stagetraining_daily (df, save_path, date):
     chance_lines = []
     for i in range(1, mask + 1, 1):
         chance_lines.append(i * chance_p)
-    chance_lines = [chance_lines[0], chance_lines[int(mask / 2)], chance_lines[-1]]
+    chance_lines = [chance_lines[0], chance_lines[-1]]
 
     #BINNING:
     x_positions = df.x.unique().tolist()
     x_positions.sort()
-    # l_edge = int(min(x_positions) - correct_th)
-    # r_edge = int(max(x_positions) + correct_th)
-    # bins_resp = np.linspace(l_edge, r_edge, x_positions + 1)
     if mask==3:
         r_positions = [60, 200, 340]
     l_edge = int(min(r_positions) - correct_th)
@@ -170,6 +167,7 @@ def stagetraining_daily (df, save_path, date):
     resp_df['error_x'] = resp_df['response_x'] - resp_df['x']
     resp_df['abs_error_x'] = resp_df['error_x'].abs()
     resp_df['correct_bool'] = np.where(resp_df['correct_th'] / 2 >= resp_df['error_x'].abs(), 1, 0)
+    resp_df['miss_bool'] = np.where(resp_df['trial_result'] =='miss', 1, 0)
     resp_df.loc[(resp_df.trial_result == 'miss', 'correct_bool')] = np.nan
     # Correct_bool column: 1 correct; 0 incorrects/punish; nan miss
 
@@ -598,5 +596,86 @@ def stagetraining_daily (df, save_path, date):
         sns.despine()
         pdf.savefig()
         plt.close()
+
+        ############## PAGE 3 ##############    LAST PAGE ONLY IF OPTO ON
+
+        if df['task'].str.contains('StageTraining_8B_V2').any():
+            df['opto_bool'] = df['opto_bool'].astype(int)
+            if 1 in df['opto_bool'].unique():
+
+                plt.figure(figsize=(11.7, 11.7))  # apaisat
+
+                ### PLOT 1: STIMULUS POSITION ACCURACY BY TRIAL TYPE
+                x_min = 0
+                x_max = 400  # screen size
+                opto_colors=['gray', 'gold']
+                opto_order=[0, 1]
+                y_pos = [0, 17, 35]
+
+                first_resp_df.loc[first_resp_df['y']==1000, 'trial_type_simple']='SIL'
+
+                for idx, ttype in enumerate(['VG', 'DS', 'SIL']):
+                    axes = plt.subplot2grid((50, 50), (0, y_pos[idx]), rowspan=11, colspan=15)
+                    subset= first_resp_df.loc[first_resp_df['trial_type_simple']==ttype]
+                    axes.set_title(ttype, fontsize=13, fontweight='bold')
+                    sns.lineplot(x='x', y='correct_bool', data=subset,  hue='opto_bool', hue_order=opto_order, marker='o',
+                                 markersize=8, err_style="bars", ci=68, palette=opto_colors)
+                    axes.hlines(y=chance_lines, xmin=x_min, xmax=x_max, color=lines_c, linestyle=':', linewidth=1)
+                    axes.fill_between(np.arange(x_min, x_max, 1), chance_p, 0, facecolor=lines2_c, alpha=0.2)
+
+                    # axis
+                    axes.set_xlim(x_min, x_max)
+                    axes.set_xlabel('Stimulus position (mm)', label_kwargs)
+                    utils.axes_pcent(axes, label_kwargs)
+                    if idx==0:
+                        axes.set_ylabel('Accuracy', label_kwargs)
+                        axes.legend(loc='center', bbox_to_anchor=(0.15, 0.15), title='Laser').set_zorder(10)
+                    else:
+                        axes.set_ylabel('')
+                        try:
+                            axes.get_legend().remove()
+                        except:
+                            pass
+
+                ### HEADINGS: LABELING TYPE
+                labeling = utils.labeling_class(df.subject.iloc[0])
+                axes.text(0.1, 0.9, 'OTPGENETICS SESSION DETAILS   ' + '\n' +
+                                    '4OHT Labeling: ' + labeling, fontsize=8, transform=plt.gcf().transFigure)  # header
+
+                ### PLOT 2: LASER ON/OFF
+                axes = plt.subplot2grid((50, 50), (16, 0), rowspan=12, colspan=6)
+                first_resp_df['count']=1
+                counts = first_resp_df.groupby('opto_bool')['count'].sum().reset_index()
+                sns.barplot(x='opto_bool', y='count', data=counts, palette=opto_colors)
+                axes.set_xlabel('Laser', label_kwargs)
+                axes.set_ylabel('Nº of trials', label_kwargs)
+
+                ### PLOT 3: % MISSES WITH LIGHT
+                axes = plt.subplot2grid((50, 50), (16, 10), rowspan=12, colspan=6)
+                df['miss_bool'] = np.where(df['trial_result'] == 'miss', 1, 0)
+                counts = df.drop_duplicates(subset=['trial'], keep='first', inplace=False).copy()
+                counts = counts.groupby('opto_bool')['miss_bool'].sum().reset_index()
+                sns.barplot(x='opto_bool', y='miss_bool', data=counts, palette=opto_colors)
+                axes.set_xlabel('Laser', label_kwargs)
+                axes.set_ylabel('Nº of misses', label_kwargs)
+
+
+                ### PLOT 4: RESPONSE LATENCIES WITH LIGHT
+                axes = plt.subplot2grid((50, 50), (16, 20), rowspan=12, colspan=15)
+                to_plot= first_resp_df.loc[first_resp_df['trial']>8]
+                sns.stripplot(x='trial_result', y='resp_latency', order=['correct_first', 'punish'], hue='opto_bool', hue_order=opto_order, data=to_plot,
+                              palette=opto_colors, dodge=True, ax=axes)
+                sns.boxplot(x='trial_result', y='resp_latency',  order=['correct_first', 'punish'], hue='opto_bool', hue_order=opto_order, data=to_plot,
+                            color='white', linewidth=0.5, showfliers=False, ax=axes)
+                axes.set_ylabel("Response latency (sec)", label_kwargs)
+                axes.set_xlabel('Trial Outcome', label_kwargs)
+                axes.set_xticklabels(['Correct', 'Incorrect'])
+                axes.get_legend().remove()
+
+
+                # SAVING AND CLOSING PAGE
+                sns.despine()
+                pdf.savefig()
+                plt.close()
 
         print('New daily report completed successfully')

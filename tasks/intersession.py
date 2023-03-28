@@ -420,6 +420,58 @@ def intersession(df, save_path_intersesion):
             pdf.savefig()
             plt.close()
 
+
+            ##################### OPTO PAGE ########################3
+
+            if df['task'].str.contains('StageTraining_8B_V2').any():
+                try:
+                    df['opto_bool'] = df['opto_bool'].astype('int')
+
+                    plt.figure(figsize=(11.7, 11.7))  # apaisat
+
+                    ### PLOT 11: STIMULUS POSITION ACCURACY BY TRIAL TYPE
+                    opto_colors = ['gray', 'gold']
+                    opto_order = [0, 1]
+                    y_pos = [0, 17, 35]
+                    df.loc[df['y'] == 1000, 'trial_type_simple'] = 'SIL'
+
+                    for idx, ttype in enumerate(['VG', 'DS', 'SIL']):
+                        axes = plt.subplot2grid((50, 50), (0, y_pos[idx]), rowspan=11, colspan=15)
+                        subset = df.loc[df['trial_type_simple'] == ttype]
+                        axes.set_title(ttype, fontsize=13, fontweight='bold')
+                        sns.lineplot(x='x_c', y='correct_bool', data=subset, hue='opto_bool', hue_order=opto_order,
+                                     marker='o', markersize=7, err_style="bars", ci=68, palette=opto_colors)
+                        axes.hlines(y=chance, xmin=x_min, xmax=x_max, color=lines_c, linestyle=':', linewidth=1)
+                        axes.fill_between(np.arange(x_min, x_max, 1), chance, 0, facecolor=lines2_c, alpha=0.2)
+
+                        # axis
+                        axes.set_xlabel('Stimulus position (mm)')
+                        utils.axes_pcent(axes, label_kwargs)
+                        axes.xaxis.set_ticklabels(['', 'L', 'C', 'R'])
+                        if idx == 0:
+                            axes.set_ylabel('Accuracy', label_kwargs)
+                            axes.legend(loc='center', bbox_to_anchor=(0.15, 0.15), title='Laser').set_zorder(10)
+                        else:
+                            axes.set_ylabel('')
+                            try:
+                                axes.get_legend().remove()
+                            except:
+                                pass
+
+                    ### HEADINGS: LABELING TYPE
+                    labeling = utils.labeling_class(df.subject.iloc[0])
+                    axes.text(0.1, 0.9, 'OTPGENETICS SESSION DETAILS     4OHT Labeling: ' + labeling, fontsize=8, transform=plt.gcf().transFigure)  # header
+
+                    ### PLOT 12: STIMULUS POSITION ACCURACY BY TRIAL TYPE
+
+                    # SAVING AND CLOSING PAGE
+                    sns.despine()
+                    pdf.savefig()
+                    plt.close()
+                except:
+                    print('Error opto parameters')
+
+
         try:
             utils.slack_spam(str(df.subject.iloc[0])+'_intersession', save_path_intersesion, "#wmfm_reports")
         except:

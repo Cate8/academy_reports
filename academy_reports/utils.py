@@ -280,6 +280,18 @@ def stimulus_duration_calculation(row):
 
 
 
+# LABELING 4OHT CLASSIFICATION
+def labeling_class(subject):
+    ''' Categorize type of labeling for each subject'''
+    central_ch = ['A61', 'A62', 'A64', 'A65', 'A69', 'A75', 'A60', 'A80']
+    homecage= ['A66', 'A70', 'A54', 'A71', 'A56']
+    if subject in central_ch:
+        return 'Central_ch'
+    elif subject in homecage:
+        return 'homecage'
+    else:
+        return 'no labeling'
+
 
 if 'SLACK_BOT_TOKEN' in os.environ:
     def slack_spam(msg='hey buddy', filepath=None, userid='U8J8YA66S'):
