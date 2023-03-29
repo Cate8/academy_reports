@@ -424,52 +424,85 @@ def intersession(df, save_path_intersesion):
             ##################### OPTO PAGE ########################3
 
             if df['task'].str.contains('StageTraining_8B_V2').any():
-                try:
-                    df['opto_bool'] = df['opto_bool'].astype('int')
+                # try:
+                df=df.loc[~(df['opto_bool'].isnull())] #remove null trials
+                df['opto_bool'] = df['opto_bool'].astype('int')
+                df=df.loc[df['date']!='2023/03/25'] #that day the opto is fake never happened
+                total_opto_sessions= df.groupby('date')['opto_on'].max().reset_index()
+                total_opto_sessions = total_opto_sessions['opto_on'].sum()
 
-                    plt.figure(figsize=(11.7, 11.7))  # apaisat
+                plt.figure(figsize=(11.7, 11.7))  # apaisat
 
-                    ### PLOT 11: STIMULUS POSITION ACCURACY BY TRIAL TYPE
-                    opto_colors = ['gray', 'gold']
-                    opto_order = [0, 1]
-                    y_pos = [0, 17, 35]
-                    df.loc[df['y'] == 1000, 'trial_type_simple'] = 'SIL'
+                ### PLOT 11: STIMULUS POSITION ACCURACY BY TRIAL TYPE
+                opto_colors = ['gray', 'gold']
+                opto_order = [0, 1]
+                y_pos = [0, 17, 35]
+                df.loc[df['y'] == 1000, 'trial_type_simple'] = 'SIL'
 
-                    for idx, ttype in enumerate(['VG', 'DS', 'SIL']):
-                        axes = plt.subplot2grid((50, 50), (0, y_pos[idx]), rowspan=11, colspan=15)
-                        subset = df.loc[df['trial_type_simple'] == ttype]
-                        axes.set_title(ttype, fontsize=13, fontweight='bold')
-                        sns.lineplot(x='x_c', y='correct_bool', data=subset, hue='opto_bool', hue_order=opto_order,
-                                     marker='o', markersize=7, err_style="bars", ci=68, palette=opto_colors)
-                        axes.hlines(y=chance, xmin=x_min, xmax=x_max, color=lines_c, linestyle=':', linewidth=1)
-                        axes.fill_between(np.arange(x_min, x_max, 1), chance, 0, facecolor=lines2_c, alpha=0.2)
+                for idx, ttype in enumerate(['VG', 'DS', 'SIL']):
+                    axes = plt.subplot2grid((50, 50), (0, y_pos[idx]), rowspan=11, colspan=15)
+                    subset = df.loc[df['trial_type_simple'] == ttype]
+                    axes.set_title(ttype, fontsize=13, fontweight='bold')
+                    sns.lineplot(x='x_c', y='correct_bool', data=subset, hue='opto_bool', hue_order=opto_order,
+                                 marker='o', markersize=7, err_style="bars", ci=68, palette=opto_colors)
+                    axes.hlines(y=chance, xmin=x_min, xmax=x_max, color=lines_c, linestyle=':', linewidth=1)
+                    axes.fill_between(np.arange(x_min, x_max+1, 1), chance, 0, facecolor=lines2_c, alpha=0.2)
 
-                        # axis
-                        axes.set_xlabel('Stimulus position (mm)')
-                        utils.axes_pcent(axes, label_kwargs)
-                        axes.xaxis.set_ticklabels(['', 'L', 'C', 'R'])
-                        if idx == 0:
-                            axes.set_ylabel('Accuracy', label_kwargs)
-                            axes.legend(loc='center', bbox_to_anchor=(0.15, 0.15), title='Laser').set_zorder(10)
-                        else:
-                            axes.set_ylabel('')
-                            try:
-                                axes.get_legend().remove()
-                            except:
-                                pass
+                    # axis
+                    axes.set_xlabel('Stimulus position')
+                    utils.axes_pcent(axes, label_kwargs)
+                    axes.xaxis.set_ticklabels(['', 'L', 'C', 'R'])
+                    if idx == 0:
+                        axes.set_ylabel('Accuracy (%)', label_kwargs)
+                        axes.legend(loc='center', bbox_to_anchor=(0.15, 0.15), title='Laser').set_zorder(10)
+                    else:
+                        axes.set_ylabel('')
+                        try:
+                            axes.get_legend().remove()
+                        except:
+                            pass
 
-                    ### HEADINGS: LABELING TYPE
-                    labeling = utils.labeling_class(df.subject.iloc[0])
-                    axes.text(0.1, 0.9, 'OTPGENETICS SESSION DETAILS     4OHT Labeling: ' + labeling, fontsize=8, transform=plt.gcf().transFigure)  # header
+                ### HEADINGS: LABELING TYPE
+                labeling = utils.labeling_class(df.subject.iloc[0])
+                text= 'OTPGENETICS SESSION DETAILS     4OHT Labeling: ' + labeling + '\n'+ 'Accumulated opto sessions: '+str(int(total_opto_sessions)) + '\n'
+                axes.text(0.1, 0.9, text , fontsize=8, transform=plt.gcf().transFigure)  # header
 
-                    ### PLOT 12: STIMULUS POSITION ACCURACY BY TRIAL TYPE
+                ### PLOT 12: ### PLOT 2: LASER ON/OFF
+                axes = plt.subplot2grid((50, 50), (16, 0), rowspan=12, colspan=6)
+                df['count']=1
+                opto_df= df.loc[df['opto_on']==1]
+                counts = opto_df.groupby('opto_bool')['count'].sum().reset_index()
+                sns.barplot(x='opto_bool', y='count', data=counts, palette=opto_colors)
+                axes.set_xlabel('Laser', label_kwargs)
+                axes.set_ylabel('Nº of trials', label_kwargs)
 
-                    # SAVING AND CLOSING PAGE
-                    sns.despine()
-                    pdf.savefig()
-                    plt.close()
-                except:
-                    print('Error opto parameters')
+                ### PLOT 3: % MISSES WITH LIGHT
+                axes = plt.subplot2grid((50, 50), (16, 10), rowspan=12, colspan=6)
+                opto_df['miss_bool'] = np.where(opto_df['trial_result'] == 'miss', 1, 0)
+                counts = opto_df.groupby('opto_bool')['miss_bool'].sum().reset_index()
+                sns.barplot(x='opto_bool', y='miss_bool', data=counts, palette=opto_colors)
+                axes.set_xlabel('Laser', label_kwargs)
+                axes.set_ylabel('Nº of misses', label_kwargs)
+
+                ### PLOT 4: RESPONSE LATENCIES WITH LIGHT
+                axes = plt.subplot2grid((50, 50), (16, 20), rowspan=12, colspan=15)
+                to_plot= df.loc[df['trial']>8]
+                sns.stripplot(x='trial_result', y='resp_latency', order=['correct_first', 'punish'], hue='opto_bool', hue_order=opto_order, data=to_plot,
+                              palette=opto_colors, dodge=True, ax=axes)
+                sns.boxplot(x='trial_result', y='resp_latency',  order=['correct_first', 'punish'], hue='opto_bool', hue_order=opto_order, data=to_plot,
+                            color='white', linewidth=0.5, showfliers=False, ax=axes)
+                axes.set_ylabel("Response latency (sec)", label_kwargs)
+                axes.set_xlabel('Trial Outcome', label_kwargs)
+                axes.set_xticklabels(['Correct', 'Incorrect'])
+                axes.get_legend().remove()
+                axes.set_ylim(0, 5)
+
+                # SAVING AND CLOSING PAGE
+                sns.despine()
+                pdf.savefig()
+                plt.close()
+                # except:
+                #     print('Error opto parameters')
 
 
         try:

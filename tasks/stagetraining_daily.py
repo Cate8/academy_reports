@@ -639,8 +639,7 @@ def stagetraining_daily (df, save_path, date):
 
                 ### HEADINGS: LABELING TYPE
                 labeling = utils.labeling_class(df.subject.iloc[0])
-                axes.text(0.1, 0.9, 'OTPGENETICS SESSION DETAILS   ' + '\n' +
-                                    '4OHT Labeling: ' + labeling, fontsize=8, transform=plt.gcf().transFigure)  # header
+                axes.text(0.1, 0.9, 'OTPGENETICS SESSION DETAILS    4OHT Labeling: ' + labeling +'\n', fontsize=8, transform=plt.gcf().transFigure)  # header
 
                 ### PLOT 2: LASER ON/OFF
                 axes = plt.subplot2grid((50, 50), (16, 0), rowspan=12, colspan=6)
@@ -671,6 +670,7 @@ def stagetraining_daily (df, save_path, date):
                 axes.set_xlabel('Trial Outcome', label_kwargs)
                 axes.set_xticklabels(['Correct', 'Incorrect'])
                 axes.get_legend().remove()
+                axes.set_ylim(0, 10)
 
 
                 # SAVING AND CLOSING PAGE
