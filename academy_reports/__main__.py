@@ -238,6 +238,8 @@ def main():
                                 touchteaching_daily(session.copy(), save_path, date)
                             elif task[0:13] == 'StageTraining':
                                 stagetraining_daily(session.copy(), save_path, date)
+                            elif task == 'S1':
+                                S1_daily(session.copy(), save_path, date)
                             else:
                                 print('Task not found for file:', path, 'task:', task)
 
