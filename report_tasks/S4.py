@@ -373,23 +373,23 @@ def daily_report_S4(df, save_path, date):
 
     # Lista per raccogliere le probabilità
 
-    df['rolling_prob'] = df['correct_outcome_int'].rolling(
-        window=5, min_periods=1).mean()
+    # df['rolling_prob'] = df['correct_outcome_int'].rolling(
+    #     window=5, min_periods=1).mean()
 
-    prob_colums = df[["trial", "side",
-                      "first_trial_response", "correct_outcome_int"]]
+    prob_colums = df[["trial", "side","first_trial_response",
+                      "correct_outcome_int"]]
     prob_df = prob_colums.copy()
-    prob_df["right_rewards"] = ((prob_df['side'] == 'right') & (
-        prob_df['correct_outcome_int'] == 1)).astype(int)
+    prob_df["right"] = ((prob_df['first_trial_response'] == 'right')).astype(int)
 
-    prob_df['rolling_avg_right_reward'] = prob_df["right_rewards"].rolling(
+    prob_df['rolling_avg_right'] = prob_df["right"].rolling(
         window=5, min_periods=1).mean()
 
     # Creazione del subplot con dimensioni specifiche nella griglia (1600, 50)
     ax = plt.subplot2grid((1600, 50), (1, 1), rowspan=450, colspan=90)
 
-    line_data = prob_df['rolling_avg_right_reward']
+    line_data = prob_df['rolling_avg_right']
     plt.plot(df['trial'], df['probability_r'], '-',
+             label='Right reward probability',
              color='black', linewidth=1, alpha=0.7)
 
     # Imposta i limiti dell'asse y con un margine più ampio
@@ -403,7 +403,8 @@ def daily_report_S4(df, save_path, date):
 
     # Grafico a linee
 
-    ax.plot(df.trial, line_data, linewidth=2, color='mediumturquoise')
+    ax.plot(df.trial, line_data, linewidth=2,
+            label='Right choice frequency', color='mediumturquoise')
 
     column = ['trial', 'side', 'correct_outcome_int',
               'first_response_left', 'first_response_right']
@@ -418,11 +419,7 @@ def daily_report_S4(df, save_path, date):
         first_lick_df.first_response_left > first_lick_df.first_response_right,
     ]
 
-    choices = ["no_response",
-               "right",
-               "left",
-               "left",
-               "right"]
+    choices = ["no_response", "right", "left", "left", "right"]
     # create a new column in the DF based on the conditions
 
     first_lick_df["first_trial_response"] = np.select(conditions, choices)
@@ -543,7 +540,7 @@ def daily_report_S4(df, save_path, date):
     ax.set_xlabel('trial')
     ax.set_ylabel('P(right)')
     plt.title('Probability right reward', pad=20)
-
+    plt.legend()
     # 2 PLOT: latency to the first correct poke
 
     axes = plt.subplot2grid((1600, 50), (1150, 1), rowspan=450, colspan=90)
