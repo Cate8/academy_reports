@@ -72,10 +72,12 @@ def daily_report_S4(df, save_path, date):
     df["correct_outcome_bool"] = df["first_trial_response"] == df[
         "side"]  # this is for having boolean variables (true/false)
     df['true_count'] = (df['correct_outcome_bool']).value_counts()[True]
-    df["correct_outcome"] = np.where(df["first_trial_response"] == df["side"], "correct",
-                                     "incorrect")  # (true = correct choice, false = incorrect side)
-    df["correct_outcome_int"] = np.where(df["first_trial_response"] == df["side"], 1,
-                                         0)  # (1 = correct choice, 0= incorrect side)
+    # (true = correct choice, false = incorrect side)
+    df["correct_outcome"] =\
+        np.where(df["first_trial_response"] == df["side"], "correct", "incorrect")
+    # (1 = correct choice, 0= incorrect side)
+    df["correct_outcome_int"] =\
+        np.where(df["first_trial_response"] == df["side"], 1, 0)
 
     # Other calculations and Averaging
 
@@ -373,11 +375,11 @@ def daily_report_S4(df, save_path, date):
 
     # Lista per raccogliere le probabilità
 
-    # df['rolling_prob'] = df['correct_outcome_int'].rolling(
+    # df['rolling_correct_strategy'] = df['correct_outcome_int'].rolling(
     #     window=5, min_periods=1).mean()
 
     prob_colums = df[["trial", "side","first_trial_response",
-                      "correct_outcome_int"]]
+                      "correct_outcome_int", "probability_r"]]
     prob_df = prob_colums.copy()
     prob_df["right"] = ((prob_df['first_trial_response'] == 'right')).astype(int)
 
@@ -639,15 +641,21 @@ def daily_report_S4(df, save_path, date):
     ).astype(int)
 
     # Lista per raccogliere le probabilità
-
-    df['rolling_prob'] = df['correct_outcome_int'].rolling(
+    # Assuming prob_df is the intended DataFrame for both conditions
+    condition = ((prob_df["right"] == 1) & (prob_df['probability_r'] >= 0.5)) | \
+                ((prob_df["right"] == 0) & (prob_df['probability_r'] <= 0.5))
+    
+    # You can use this condition directly if you're looking to create a new column based on this condition, for example:
+    prob_df['correct_strategy'] = np.where(condition, True, False)
+    prob_df['rolling_correct_strategy'] = prob_df['correct_strategy'].rolling(
         window=5, min_periods=1).mean()
 
     # Creazione del subplot con dimensioni specifiche nella griglia (1600, 50)
 
-    line_data = df['rolling_prob']
-    plt.plot(df['trial'], df['probability_r'], '-',
-             color='black', linewidth=1, alpha=0.7)
+    line_data = prob_df['rolling_correct_strategy']
+    plt.plot(df['trial'], prob_df['probability_r'], '-',
+             color='black', label='Right reward probability',
+             linewidth=1, alpha=0.7)
 
     # Imposta i limiti dell'asse y con un margine più ampio
     axes.set_ylim(-0.5, 1.5)
@@ -657,10 +665,11 @@ def daily_report_S4(df, save_path, date):
     plt.axhline(y=1, linestyle='solid', color='black', alpha=0.7)
     plt.axhline(y=0.5, linestyle='--', color='lightgray', alpha=0.7)
     plt.axhline(y=0, linestyle='solid', color='black', alpha=0.7)
-
     # Grafico a linee
 
-    axes.plot(df.trial, line_data, linewidth=2, color='orange')
+    axes.plot(df.trial, line_data, linewidth=2, label='Performance',
+              color='orange')
+    plt.legend()
 
     column = ['trial', 'side', 'correct_outcome_int',
               'first_response_left', 'first_response_right']
@@ -729,13 +738,13 @@ def daily_report_S4(df, save_path, date):
     for i in range(num_blocks):
         start = i * blocks_lenght
         end = start + blocks_lenght
-        mean = df['rolling_prob'][start:end].mean()
+        mean = prob_df['rolling_correct_strategy'][start:end].mean()
         # Nota: end-1 perché .loc è inclusivo
         df.loc[start:end - 1, 'mean_probabilities'] = mean
 
     # Gestisci l'ultimo blocco se i trials non sono un multiplo di 20
     if len(df) % blocks_lenght != 0:
-        mean = df['rolling_prob'][end:].mean()
+        mean = prob_df['rolling_correct_strategy'][end:].mean()
         df.loc[end:, 'mean_probabilities'] = mean
 
     # Assumendo che ax sia l'asse del tuo grafico Matplotlib
@@ -870,6 +879,7 @@ def daily_report_S4(df, save_path, date):
 
 
 if __name__ == '__main__':
+    plt.close('all')
     path = '/home/molano/Downloads/A17_S4-1-1_20240209-233744.csv'
     df = pd.read_csv(path, sep=';')
 
