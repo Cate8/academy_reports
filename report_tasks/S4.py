@@ -243,15 +243,7 @@ def daily_report_S4(df, save_path, date):
     mpl.rcParams['font.size'] = 7
     mpl.rcParams['axes.spines.right'] = False
     mpl.rcParams['axes.spines.top'] = False
-    # label_kwargs = {'fontsize': 9, 'fontweight': 'roman'}
 
-    # PLOT COLORS:
-
-    # left_c = 'aquamarine'
-    # right_c = 'orange'
-    # correct_c = 'green'
-    # incorrect_c = 'red'
-    # label_kwargs = {'fontsize': 9}
 
     plt.figure(figsize=(8, 11))
 
@@ -375,8 +367,6 @@ def daily_report_S4(df, save_path, date):
 
     # Lista per raccogliere le probabilità
 
-    # df['rolling_correct_strategy'] = df['correct_outcome_int'].rolling(
-    #     window=5, min_periods=1).mean()
 
     prob_colums = df[["trial", "side","first_trial_response",
                       "correct_outcome_int", "probability_r"]]
@@ -404,7 +394,6 @@ def daily_report_S4(df, save_path, date):
     plt.axhline(y=0, linestyle='solid', color='black', alpha=0.7)
 
     # Grafico a linee
-
     ax.plot(df.trial, line_data, linewidth=2,
             label='Right choice frequency', color='mediumturquoise')
 
@@ -423,7 +412,6 @@ def daily_report_S4(df, save_path, date):
 
     choices = ["no_response", "right", "left", "left", "right"]
     # create a new column in the DF based on the conditions
-
     first_lick_df["first_trial_response"] = np.select(conditions, choices)
 
     # Crea la colonna 'first_resp_left'
@@ -880,15 +868,15 @@ def daily_report_S4(df, save_path, date):
 
 if __name__ == '__main__':
     plt.close('all')
-    path = '/home/molano/Downloads/A17_S4-1-1_20240209-233744.csv'
+    path = '/Users/cateb/Downloads/A10_S4-1-1_20240214-082225.csv'
     df = pd.read_csv(path, sep=';')
 
     subject = df.subject.iloc[0]
     task = df.task.iloc[0]
     date = datetime.datetime.fromtimestamp(df.TRIAL_START.iloc[0]).strftime("%Y%m%d-%H%M%S")
 
-    save_directory = '/home/molano/Downloads/'
+    save_directory = '/Users/cateb/Desktop'
 
-    file_name = 'test.pdf'
+    file_name = 'testA10.pdf'
     save_path = os.path.join(save_directory, file_name)
     daily_report_S4(df, save_path, date)
