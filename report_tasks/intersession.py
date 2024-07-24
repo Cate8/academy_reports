@@ -22,6 +22,35 @@ def intersession(df,  pdf_path):
     label_kwargs = {'fontsize': 9}
     lines_c = 'gray'
 
+    unique_boxes = df['box'].unique()
+    box = unique_boxes[0]
+
+    # BOX = 9
+    # BPOD port5 ->  right
+    # BPOD port3 -> (central)
+    # BPOD port2 -> left
+
+    # BOX = 12
+    # BPOD port7 -> left
+    # BPOD port4 -> (central)
+    # BPOD port1 -> right
+
+    if box == 9:
+        df['left_poke_in'] = df['Port2In_START']
+        df['left_poke_out'] = df['Port2Out_START']
+        df['center_poke_in'] = df['Port3In_START']
+        df['center_poke_out'] = df['Port3Out_START']
+        df['right_poke_in'] = df['Port5In_START']
+        df['right_poke_out'] = df['Port5Out_START']
+    elif box == 12:
+        df['left_poke_in'] = df['Port7In_START']
+        df['left_poke_out'] = df['Port7Out_START']
+        df['center_poke_in'] = df['Port4In_START']
+        df['center_poke_out'] = df['Port4Out_START']
+        df['right_poke_in'] = df['Port1In_START']
+        df['right_poke_out'] = df['Port1Out_START']
+
+
 
     ##### SELECT LAST MONTH SESSIONS #####
     df['day'] = pd.to_datetime(df['date']).dt.date
@@ -38,10 +67,10 @@ def intersession(df,  pdf_path):
     df['response_time'] = df['STATE_side_light_END'] - df['STATE_side_light_START']
     df['duration_drink_delay'] = df['STATE_drink_delay_END'] - df['STATE_drink_delay_START']
     df['centre_response_latency'] = df['center_response_time']
-    df['Port5In_START'] = df['Port5In_START'].astype(str)
-    df['Port2In_START'] = df['Port2In_START'].astype(str)
-    df['first_response_right'] = df['Port5In_START'].str.split(',').str[0].astype(float)
-    df['first_response_left'] = df['Port2In_START'].str.split(',').str[0].astype(float)
+    df['right_poke_in'] = df['right_poke_in'].astype(str)
+    df['left_poke_in'] = df['left_poke_in'].astype(str)
+    df['first_response_right'] = df['right_poke_in'].str.split(',').str[0].astype(float)
+    df['first_response_left'] = df['left_poke_in'].str.split(',').str[0].astype(float)
     df['center_median_response_time'] = df['centre_response_latency'].median()  # median latency to first response
     df['response_latency_median'] = df['response_time'].median()  # median latency to first response
     df['probability_r'] = np.round(df['probability_r'], 1)

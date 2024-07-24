@@ -7,6 +7,13 @@ import os
 
 def report_water_calibration(df, save_path):
 
+        # replace all nans with 0
+    df = df.replace(np.nan, 0)
+
+    unique_boxes = df['box'].unique()
+    box = unique_boxes[0]
+
+
     # Remove index
     remove_index = [0, 1, 2, 3, 4, 5, 6, 7, 12]
     remove_column = 'Unnamed: 6'
@@ -23,14 +30,27 @@ def report_water_calibration(df, save_path):
     df['water'] = df['water'].apply(lambda x: f"{x:.1f}")    #just one decimal
     df['date'] = df['date'].str.replace('2024/', '', regex=False)   # Remove '2024/'
 
-    # DataFrame per i dati 'right'
-    df['port'] = df['port'].replace({5: 'right_port5', 2: 'left_port2'})
+    # BOX = 9
+    # BPOD port5 -> right
+    # BPOD port3 -> (central)
+    # BPOD port2 -> left
+
+    # BOX = 12
+    # BPOD port7 -> left
+    # BPOD port4 -> (central)
+    # BPOD port1 -> right
+
+
+    if box == 9:
+        df['port'] = df['port'].replace({5: 'right_port', 2: 'left_port'})
+    elif box == 12:
+        df['port'] = df['port'].replace({1: 'right_port', 7: 'left_port'})
 
     # Df for right(5) port data
-    df_r = df[df['port'] == 'right_port5'].copy()
+    df_r = df[df['port'] == 'right_port'].copy()
 
     # Df for left (2) port data
-    df_l = df[df['port'] == 'left_port2'].copy()
+    df_l = df[df['port'] == 'left_port'].copy()
 
     # Convert 'volumes' and 'pulses' columns to lists of floats
     df_l['volumes'] = df['volumes'].apply(lambda x: [float(i) for i in x.split(',')])
@@ -69,7 +89,7 @@ def report_water_calibration(df, save_path):
 
     # Plot 1: volumes during calibration left (port2)
     axs[0].scatter(df_exp_l['date'], df_exp_l['volumes'], color="green", s=70)
-    axs[0].set_title('Water volumes left (Port2)', fontsize=22)  # Imposta esplicitamente la dimensione qui
+    axs[0].set_title('Water volumes left', fontsize=22)  # Imposta esplicitamente la dimensione qui
     axs[0].set_ylabel('volume (uL)', fontsize=18)
     axs[0].tick_params(axis='x', labelsize=16, rotation=45)
     axs[0].tick_params(axis='y', labelsize=16)
@@ -82,7 +102,7 @@ def report_water_calibration(df, save_path):
 
     # Plot 2: volumes during calibration right (port5)
     axs[1].scatter(df_exp_r['date'], df_exp_r['volumes'], color="purple", s=70)
-    axs[1].set_title('Water volumes right (Port5)', fontsize=22)  # Imposta esplicitamente la dimensione qui
+    axs[1].set_title('Water volumes right', fontsize=22)  # Imposta esplicitamente la dimensione qui
     axs[1].set_ylabel('volume (uL)', fontsize=18)
     axs[1].tick_params(axis='x', labelsize=16, rotation=45)
     axs[1].tick_params(axis='y', labelsize=16)
@@ -96,7 +116,7 @@ def report_water_calibration(df, save_path):
     # Plot 3: pulse duration left (port2)
     axs[2].plot(df_exp_l['date'], df_exp_l['pulse_duration'], color="green", label='Pulse Duration')
     axs[2].scatter(df_exp_l['date'], df_exp_l['pulse_duration'], color="green", s=50)
-    axs[2].set_title('Final pulse durations left (Port2)', fontsize=22)  # Imposta esplicitamente la dimensione qui
+    axs[2].set_title('Final pulse durations left', fontsize=22)  # Imposta esplicitamente la dimensione qui
     axs[2].set_ylabel('Duration (msec)', fontsize=18)
     axs[2].tick_params(axis='x', labelsize=16, rotation=45)
     axs[2].tick_params(axis='y', labelsize=16)
@@ -104,14 +124,14 @@ def report_water_calibration(df, save_path):
     # Plot 4: pulse duration right (port5)
     axs[3].plot(df_exp_r['date'], df_exp_r['pulse_duration'], color="purple", label='Pulse Duration')
     axs[3].scatter(df_exp_r['date'], df_exp_r['pulse_duration'], color="purple", s=50)
-    axs[3].set_title('Final pulse durations right (Port5)', fontsize=22)  # Imposta esplicitamente la dimensione qui
+    axs[3].set_title('Final pulse durations right', fontsize=22)  # Imposta esplicitamente la dimensione qui
     axs[3].set_ylabel('Duration (msec)', fontsize=18)
     axs[3].tick_params(axis='x', labelsize=16, rotation=45)
     axs[3].tick_params(axis='y', labelsize=16)
 
     # Plot 5: pulses during calibration left (port2)
     axs[4].scatter(df_exp_l['date'], df_exp_l['pulses'], color="green", s=70)
-    axs[4].set_title('Pulses duration left (Port2)', fontsize=22)  # Imposta esplicitamente la dimensione qui
+    axs[4].set_title('Pulses duration left', fontsize=22)  # Imposta esplicitamente la dimensione qui
     axs[4].set_ylabel('Duration (msec)', fontsize=18)
     axs[4].tick_params(axis='x', labelsize=16, rotation=45)
     axs[4].tick_params(axis='y', labelsize=16)
@@ -119,7 +139,7 @@ def report_water_calibration(df, save_path):
 
     # Plot 6: pulses during calibration right (port5)
     axs[5].scatter(df_exp_r['date'], df_exp_r['pulses'], color="purple", s=70)
-    axs[5].set_title('Pulses duration right (Port2)', fontsize=22)  # Imposta esplicitamente la dimensione qui
+    axs[5].set_title('Pulses duration right', fontsize=22)  # Imposta esplicitamente la dimensione qui
     axs[5].set_ylabel('Duration (msec)', fontsize=18)
     axs[5].tick_params(axis='x', labelsize=16, rotation=45)
     axs[5].tick_params(axis='y', labelsize=16)

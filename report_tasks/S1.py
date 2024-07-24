@@ -12,6 +12,37 @@ def daily_report_S1(df, save_path, date):
 
 
     df = df.replace(np.nan, 0)
+        # replace all nans with 0
+    df = df.replace(np.nan, 0)
+
+    unique_boxes = df['box'].unique()
+    box = unique_boxes[0]
+
+    # BOX = 9
+    # BPOD port5 ->  right
+    # BPOD port3 -> (central)
+    # BPOD port2 -> left
+
+    # BOX = 12
+    # BPOD port7 -> left
+    # BPOD port4 -> (central)
+    # BPOD port1 -> right
+
+    if box == 9:
+        df['left_poke_in'] = df['Port2In_START']
+        df['left_poke_out'] = df['Port2Out_START']
+        df['center_poke_in'] = df['Port3In_START']
+        df['center_poke_out'] = df['Port3Out_START']
+        df['right_poke_in'] = df['Port5In_START']
+        df['right_poke_out'] = df['Port5Out_START']
+    elif box == 12:
+        df['left_poke_in'] = df['Port7In_START']
+        df['left_poke_out'] = df['Port7Out_START']
+        df['center_poke_in'] = df['Port4In_START']
+        df['center_poke_out'] = df['Port4Out_START']
+        df['right_poke_in'] = df['Port1In_START']
+        df['right_poke_out'] = df['Port1Out_START']
+
 
     # create a new column in the DF based on the conditions
 
@@ -25,10 +56,10 @@ def daily_report_S1(df, save_path, date):
     df['duration_water_light']= df['STATE_water_light_END'] - df['STATE_water_light_START']
     df['response_latency'] = df['duration_waiting_light'].copy()
 
-    df['Port5In_START'] = df['Port5In_START'].astype(str)
-    df['Port2In_START'] = df['Port2In_START'].astype(str)
-    df['first_response_right'] = df['Port5In_START'].str.split(',').str[0].astype(float)
-    df['first_response_left'] = df['Port2In_START'].str.split(',').str[0].astype(float)
+    df['right_poke_in'] = df['right_poke_in'].astype(str)
+    df['left_poke_in'] = df['left_poke_in'].astype(str)
+    df['first_response_right'] = df['right_poke_in'].str.split(',').str[0].astype(float)
+    df['first_response_left'] = df['left_poke_in'].str.split(',').str[0].astype(float)
 
     conditions = [
         (df.first_response_left == 0) & (df.first_response_right == 0),
@@ -69,7 +100,7 @@ def daily_report_S1(df, save_path, date):
     # formatted_missed_reward_rate = "{:.2f}".format(missed_reward_rate)
 
     # omission: no RESPONSE. NO POKE. it's general
-    df["omission_bool"] = (df['Port2In_START'] == 0) & (df['Port3In_START'] == 0) & (df['Port5In_START'] == 0)
+    df["omission_bool"] = (df['left_poke_in'] == 0) & (df['center_poke_in'] == 0) & (df['right_poke_in'] == 0)
     df["omission_int"] = df["omission_bool"].astype(int)
     df['omission_sum'] = df["omission_int"].sum()
     tot_omission = df.omission_sum.iloc[0]

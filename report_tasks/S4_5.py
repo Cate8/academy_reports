@@ -25,7 +25,7 @@ def daily_report_S4_5(df, save_path, date):
     box = unique_boxes[0]
 
     # BOX = 9
-    # BPOD port5 ->  right
+    # BPOD port5 -> right
     # BPOD port3 -> (central)
     # BPOD port2 -> left
 

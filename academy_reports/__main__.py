@@ -8,8 +8,6 @@ from datetime import timedelta, datetime
 from report_tasks.S1 import daily_report_S1
 from report_tasks.S2 import daily_report_S2
 from report_tasks.S3 import daily_report_S3
-from report_tasks.non_fixed_blocks import daily_report_non_fixed_blocks
-
 from report_tasks.S4_5 import daily_report_S4_5
 from report_tasks.water_calibration import report_water_calibration
 from report_tasks.intersession import intersession
