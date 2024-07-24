@@ -17,10 +17,37 @@ import warnings
 
 
 def daily_report_S4_5(df, save_path, date):
-    #df = pd.read_csv(path, sep=';')
-    # replace all nans with 0
-    #df = df.replace(np.nan, 0)
 
+    # replace all nans with 0
+    df = df.replace(np.nan, 0)
+
+    unique_boxes = df['box'].unique()
+    box = unique_boxes[0]
+
+    # BOX = 9
+    # BPOD port5 ->  right
+    # BPOD port3 -> (central)
+    # BPOD port2 -> left
+
+    # BOX = 12
+    # BPOD port7 -> left
+    # BPOD port4 -> (central)
+    # BPOD port1 -> right
+
+    if box == 9:
+        df['left_poke_in'] = df['Port2In_START']
+        df['left_poke_out'] = df['Port2Out_START']
+        df['center_poke_in'] = df['Port3In_START']
+        df['center_poke_out'] = df['Port3Out_START']
+        df['right_poke_in'] = df['Port5In_START']
+        df['right_poke_out'] = df['Port5Out_START']
+    elif box == 12:
+        df['left_poke_in'] = df['Port7In_START']
+        df['left_poke_out'] = df['Port7Out_START']
+        df['center_poke_in'] = df['Port4In_START']
+        df['center_poke_out'] = df['Port4Out_START']
+        df['right_poke_in'] = df['Port1In_START']
+        df['right_poke_out'] = df['Port1Out_START']
 
     # New columns (variables)
     df['trial_duration'] = df['TRIAL_END'] - df['TRIAL_START']
@@ -37,11 +64,11 @@ def daily_report_S4_5(df, save_path, date):
     df['centre_response_latency'] = df['center_light_duration']
     df['side_response_latency'] = df['side_light_duration']
 
-    df['Port5In_START'] = df['Port5In_START'].astype(str)
-    df['Port2In_START'] = df['Port2In_START'].astype(str)
-    df['first_response_right'] = df['Port5In_START'].str.split(
+    df['right_poke_in'] = df['right_poke_in'].astype(str)
+    df['left_poke_in'] = df['left_poke_in'].astype(str)
+    df['first_response_right'] = df['right_poke_in'].str.split(
         ',').str[0].astype(float)
-    df['first_response_left'] = df['Port2In_START'].str.split(
+    df['first_response_left'] = df['left_poke_in'].str.split(
         ',').str[0].astype(float)
 
     df = df.replace(np.nan, 0)
@@ -105,14 +132,14 @@ def daily_report_S4_5(df, save_path, date):
     count_missed_center_trials = df['missed_center_poke'].sum()
 
     # omission: no RESPONSE. NO POKE. it's general
-    df["omission_center_bool"] = (df['Port2In_START'] == 0) & (
-        df['Port3In_START'] == 0) & (df['Port5In_START'] == 0)
+    df["omission_center_bool"] = (df['left_poke_in'] == 0) & (
+        df['center_poke_in'] == 0) & (df['right_poke_in'] == 0)
     df["omission_int"] = df["omission_center_bool"].astype(int)
     df['omission_sum'] = df["omission_int"].sum()
     tot_center_omission = df.omission_sum.iloc[0]
 
-    df["omission_sides_bool"] = (df['Port2In_START'] == 0) & (
-        df['Port3In_START'] != 0) & (df['Port5In_START'] == 0)
+    df["omission_sides_bool"] = (df['left_poke_in'] == 0) & (
+        df['center_poke_in'] != 0) & (df['right_poke_in'] == 0)
     df["omission_int"] = df["omission_center_bool"].astype(int)
     df['omission_sum'] = df["omission_int"].sum()
     tot_center_omission = df.omission_sum.iloc[0]
@@ -138,32 +165,32 @@ def daily_report_S4_5(df, save_path, date):
     # BPOD port3 -> (central)
     # BPOD port2 -> left
 
-    columns_of_interest = ['trial', 'STATE_side_light_END', 'Port2In_START']
-    columns_of_interest1 = ['trial', 'STATE_side_light_END', 'Port3In_START']
-    columns_of_interest2 = ['trial', 'STATE_side_light_END', 'Port5In_START']
+    columns_of_interest = ['trial', 'STATE_side_light_END', 'left_poke_in']
+    columns_of_interest1 = ['trial', 'STATE_side_light_END', 'center_poke_in']
+    columns_of_interest2 = ['trial', 'STATE_side_light_END', 'right_poke_in']
 
     # Crea un nuovo DataFrame con solo le colonne di interesse
     exploded_port2_df = df[columns_of_interest].copy()
     exploded_port3_df = df[columns_of_interest1].copy(
-    ) if 'Port3In_START' in df else 0
+    ) if 'center_poke_in' in df else 0
     exploded_port5_df = df[columns_of_interest2].copy()
 
     # Suddividi le colonne utilizzando la virgola come delimitatore
-    exploded_port2_df['Port2In_START'] = df['Port2In_START'].str.split(',')
-    exploded_port3_df['Port3In_START'] = df['Port3In_START'].astype(
-        str).str.split(',') if 'Port3In_START' in df else 0
-    exploded_port5_df['Port5In_START'] = df['Port5In_START'].str.split(
-        ',') if 'Port5In_START' in df else 0
+    exploded_port2_df['left_poke_in'] = df['left_poke_in'].str.split(',')
+    exploded_port3_df['center_poke_in'] = df['center_poke_in'].astype(
+        str).str.split(',') if 'center_poke_in' in df else 0
+    exploded_port5_df['right_poke_in'] = df['right_poke_in'].str.split(
+        ',') if 'right_poke_in' in df else 0
 
     # Esploa le colonne con liste in righe separate
-    exploded_port2_df = exploded_port2_df.explode('Port2In_START')
-    exploded_port3_df = exploded_port3_df.explode('Port3In_START')
-    exploded_port5_df = exploded_port5_df.explode('Port5In_START')
+    exploded_port2_df = exploded_port2_df.explode('left_poke_in')
+    exploded_port3_df = exploded_port3_df.explode('center_poke_in')
+    exploded_port5_df = exploded_port5_df.explode('right_poke_in')
 
     # explode le colonne con liste in righe separate
-    exploded_port2_df = exploded_port2_df.explode('Port2In_START')
-    exploded_port3_df = exploded_port3_df.explode('Port3In_START')
-    exploded_port5_df = exploded_port5_df.explode('Port5In_START')
+    exploded_port2_df = exploded_port2_df.explode('left_poke_in')
+    exploded_port3_df = exploded_port3_df.explode('center_poke_in')
+    exploded_port5_df = exploded_port5_df.explode('right_poke_in')
 
     # replace all nans with 100
     exploded_port2_df = exploded_port2_df.replace(np.nan, 190898697687982)
@@ -171,12 +198,12 @@ def daily_report_S4_5(df, save_path, date):
     exploded_port5_df = exploded_port5_df.replace(np.nan, 190898697687982)
 
     #  'PortIn_START' in float
-    exploded_port2_df['Port2In_START'] = pd.to_numeric(
-        exploded_port2_df['Port2In_START'], errors='coerce')
-    exploded_port3_df['Port3In_START'] = pd.to_numeric(
-        exploded_port3_df['Port3In_START'], errors='coerce')
-    exploded_port5_df['Port5In_START'] = pd.to_numeric(
-        exploded_port5_df['Port5In_START'], errors='coerce')
+    exploded_port2_df['left_poke_in'] = pd.to_numeric(
+        exploded_port2_df['left_poke_in'], errors='coerce')
+    exploded_port3_df['center_poke_in'] = pd.to_numeric(
+        exploded_port3_df['center_poke_in'], errors='coerce')
+    exploded_port5_df['right_poke_in'] = pd.to_numeric(
+        exploded_port5_df['right_poke_in'], errors='coerce')
 
     # BPOD port5 ->  right
     # BPOD port3 -> (central)
@@ -191,11 +218,11 @@ def daily_report_S4_5(df, save_path, date):
     def count_pokes(value):
         return 1 if value != fake_value else 0
 
-    exploded_port2_df['left_poke'] = exploded_port2_df['Port2In_START'].apply(
+    exploded_port2_df['left_poke'] = exploded_port2_df['left_poke_in'].apply(
         count_pokes)
-    exploded_port3_df['central_poke'] = exploded_port3_df['Port3In_START'].apply(
+    exploded_port3_df['central_poke'] = exploded_port3_df['center_poke_in'].apply(
         count_pokes)
-    exploded_port5_df['right_poke'] = exploded_port5_df['Port5In_START'].apply(
+    exploded_port5_df['right_poke'] = exploded_port5_df['right_poke_in'].apply(
         count_pokes)
 
     # count each poke in each trial
@@ -208,11 +235,11 @@ def daily_report_S4_5(df, save_path, date):
 
     # comparison to find poke before the correct one
     exploded_port2_df['result'] = np.where(
-        exploded_port2_df['Port2In_START'] <= exploded_port2_df['STATE_side_light_END'], 1, 0)
+        exploded_port2_df['left_poke_in'] <= exploded_port2_df['STATE_side_light_END'], 1, 0)
     exploded_port3_df['result'] = np.where(
-        exploded_port3_df['Port3In_START'] <= exploded_port3_df['STATE_side_light_END'], 1, 0)
+        exploded_port3_df['center_poke_in'] <= exploded_port3_df['STATE_side_light_END'], 1, 0)
     exploded_port5_df['result'] = np.where(
-        exploded_port5_df['Port5In_START'] <= exploded_port5_df['STATE_side_light_END'], 1, 0)
+        exploded_port5_df['right_poke_in'] <= exploded_port5_df['STATE_side_light_END'], 1, 0)
 
     # Creazione di nuove colonne in df per i risultati sommati raggruppati per l'indice
     df['poke_before_correct_left'] = exploded_port2_df.groupby(
@@ -302,7 +329,7 @@ def daily_report_S4_5(df, save_path, date):
     plt.figtext(0.00, 0.91, session_summary, fontsize=9)
 
     # 1 PLOT: Probability computed from the first trial outcome to get the reward omissions and misses
-    df['first_response_center'] = df['Port3In_START'].str.split(
+    df['first_response_center'] = df['center_poke_in'].str.split(
         ',').str[0].astype(float)
 
     # calculate missing and omission per port
@@ -564,7 +591,7 @@ def daily_report_S4_5(df, save_path, date):
     # 3 PLOT: computed probability
 
     axes = plt.subplot2grid((1600, 50), (600, 1), rowspan=400, colspan=90)
-    df['first_response_center'] = df['Port3In_START'].str.split(
+    df['first_response_center'] = df['center_poke_in'].str.split(
         ',').str[0].astype(float)
 
     # calculate missing and omission per port
