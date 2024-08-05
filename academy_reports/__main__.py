@@ -232,6 +232,39 @@ def main():
                                 pdf_pages.close()
                                 print('Error daily for file:', file_name)
 
+                        elif task == 'S4_5_batchA':
+                                print('Doing daily for file:', file_name)
+                                try:
+                                    daily_report_S4_5(session.copy(), save_path, date)
+                                    print('correct daily for file:', file_name)
+                                except Exception as error:
+                                    print(traceback.format_exc())
+                                    pdf_pages = PdfPages(save_path)
+                                    pdf_pages.close()
+                                    print('Error daily for file:', file_name)
+
+                        elif task == 'S4_5_single_pulse':
+                            print('Doing daily for file:', file_name)
+                            try:
+                                daily_report_S4_5(session.copy(), save_path, date)
+                                print('correct daily for file:', file_name)
+                            except Exception as error:
+                                print(traceback.format_exc())
+                                pdf_pages = PdfPages(save_path)
+                                pdf_pages.close()
+                                print('Error daily for file:', file_name)
+
+                        elif task == 'S4_5_train_pulse':
+                            print('Doing daily for file:', file_name)
+                            try:
+                                daily_report_S4_5(session.copy(), save_path, date)
+                                print('correct daily for file:', file_name)
+                            except Exception as error:
+                                print(traceback.format_exc())
+                                pdf_pages = PdfPages(save_path)
+                                pdf_pages.close()
+                                print('Error daily for file:', file_name)
+
 
                     else:
                         print('Already done!')
