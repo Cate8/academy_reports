@@ -1,21 +1,19 @@
 import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-
-import numpy as np
-from matplotlib.backends.backend_pdf import PdfPages
-import matplotlib.ticker as ticker
-import pandas as pd
-import matplotlib as mpl
-import matplotlib.pyplot as plt
 import matplotlib.markers as mmarkers
 import seaborn as sns
 import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
-from scipy.special import erf
-from scipy.optimize import curve_fit
+import os
 import matplotlib.ticker as ticker
-
+import datetime
+from datetime import datetime, timedelta, date
+from fpdf import FPDF
+from matplotlib.lines import Line2D
+from matplotlib.patches import Patch
+import logging
+import warnings
 
 
 def daily_report_S4_5(df, save_path, date):
@@ -564,6 +562,7 @@ def daily_report_S4_5(df, save_path, date):
     # 2 PLOT: latency to the first correct poke
 
     ax1 = plt.subplot2grid((1600, 50), (1150, 1), rowspan=450, colspan=25)
+    ax1 = plt.subplot2grid((1600, 50), (1150, 1), rowspan=450, colspan=90)
 
     plt.plot(df.trial, df.side_response_latency,
              color='dodgerblue', label='Side')

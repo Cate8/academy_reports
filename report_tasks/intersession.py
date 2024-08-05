@@ -454,6 +454,7 @@ def intersession(df,  pdf_path):
             plt.xlabel('Probability type')
             plt.ylabel('Right choice Rate')
             sns.despine()
+            plt.ylim(0, 1)
 
         # PSICOMETRICA: RIGHT CHOICE REWARD VS PROBABILITY TYPE splitted by ITIs
         axes = plt.subplot2grid((50, 50), (39, 18), rowspan=11, colspan=14)
@@ -581,11 +582,11 @@ def intersession(df,  pdf_path):
          pdf.savefig()
          plt.close()
 
-    try:
-        print("************ trying to send the file: ", pdf_path)
-        print(str(df.subject.iloc[0]))
-        utils.slack_spam(str(df.subject.iloc[0])+'_intersession', pdf_path, "#prl_reports")
-        print("ok")
-    except:
-        print("could not send intersession")
-    print('Intersession completed succesfully!')
+    # try:
+    #     print("************ trying to send the file: ", pdf_path)
+    #     print(str(df.subject.iloc[0]))
+    #     utils.slack_spam(str(df.subject.iloc[0])+'_intersession', pdf_path, "#prl_reports")
+    #     print("ok")
+    # except:
+    #     print("could not send intersession")
+    # print('Intersession completed succesfully!')
