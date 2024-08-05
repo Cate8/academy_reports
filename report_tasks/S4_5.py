@@ -380,22 +380,7 @@ def daily_report_S4_5(df, save_path, date):
         (omission_df['first_response_left'] != 0) &
         (omission_df['first_response_right'] != 0)
     ).astype(int)
-    # # left miss: when no poke in left when reward it's on left side but poke in centre and right or in at least one of them
-    # omission_df['left_miss'] = (
-    #     ((omission_df['side'] == "left") & (df['STATE_timeout_START'] == 0)) &
-    #     (omission_df['first_response_left'] == 0) &
-    #     (omission_df['first_response_center'] != 0) &
-    #     (omission_df['first_response_right'] != 0)
-    # ).astype(int)
-    # # right miss: when no poke in right when reward it's on right side but poke in centre and left or in at least one of them
-    # omission_df['right_miss'] = (
-    #     ((omission_df['side'] == "right") & (df['STATE_timeout_START'] == 0)) &
-    #     (omission_df['first_response_right'] == 0) &
-    #     (omission_df['first_response_center'] != 0) &
-    #     (omission_df['first_response_left'] != 0)
-    # ).astype(int)
 
-    # Lista per raccogliere le probabilità
 
 
     prob_colums = df[["trial", "side","first_trial_response",
@@ -509,40 +494,6 @@ def daily_report_S4_5(df, save_path, date):
     for point in change_points:
         ax.axvline(x=point, color='gray', linestyle='--')
 
-    # # Right: omission and misses
-    # for trial, param in enumerate(omission_df['right_omission']):
-    #     if param == 1:
-    #         # Sostituisci 'trial' con la posizione x corretta
-    #         plt.scatter(trial, -0.2, color='purple', marker="X", s=30)
-    #     for trial, param in enumerate(omission_df['right_miss']):
-    #         if param == 1:
-    #             # Sostituisci 'trial' con la posizione x corretta
-    #             plt.scatter(trial, 1.3, color='purple',  marker="x", s=30)
-
-    # # left: omission and misses
-    # for trial, param in enumerate(omission_df['left_omission']):
-    #     if param == 1:
-    #         # Sostituisci 'trial' con la posizione x corretta
-    #         plt.scatter(trial, 1.4, color='green', marker="X", s=30)
-
-    # # Aggiungi i ticks per i parametri di sinistra
-    # for trial, param in enumerate(omission_df['left_miss']):
-    #     if param == 1:
-    #         # Sostituisci 'trial' con la posizione x corretta
-    #         plt.scatter(trial, 1.3, color='green', marker="x", s=30)
-
-    # # central thicks: omission and misses
-    # for trial, param in enumerate(omission_df['general_omission']):
-    #     if param == 1:
-    #         # Sostituisci 'trial' con la posizione x corretta
-    #         plt.scatter(trial, 0.5, color='black',  marker="X", s=30)
-    #
-    # # Aggiungi i ticks per i parametri di sinistra
-    # for trial, param in enumerate(omission_df['central_miss']):
-    #     if param == 1:
-    #         # Sostituisci 'trial' con la posizione x corretta
-    #         plt.scatter(trial, 0.5, color='black',  marker="x", s=30)
-
     ax.text(1.02, 0.1, 'L', ha='left', va='top',
             color='green', transform=ax.transAxes, fontsize=10)
 
@@ -643,20 +594,7 @@ def daily_report_S4_5(df, save_path, date):
         (omission_df['first_response_left'] != 0) &
         (omission_df['first_response_right'] != 0)
     ).astype(int)
-    # left miss: when no poke in left when reward it's on left side but poke in centre and right or in at least one of them
-    # omission_df['left_miss'] = (
-    #     ((omission_df['side'] == "left") & (df['STATE_timeout_START'] == 0)) &
-    #     (omission_df['first_response_left'] == 0) &
-    #     (omission_df['first_response_center'] != 0) &
-    #     (omission_df['first_response_right'] != 0)
-    # ).astype(int)
-    # # right miss: when no poke in right when reward it's on right side but poke in centre and left or in at least one of them
-    # omission_df['right_miss'] = (
-    #     ((omission_df['side'] == "right") & (df['STATE_timeout_START'] == 0)) &
-    #     (omission_df['first_response_right'] == 0) &
-    #     (omission_df['first_response_center'] != 0) &
-    #     (omission_df['first_response_left'] != 0)
-    # ).astype(int)
+
 
     # Lista per raccogliere le probabilità
     # Assuming prob_df is the intended DataFrame for both conditions
@@ -718,10 +656,6 @@ def daily_report_S4_5(df, save_path, date):
     # Crea la colonna 'first_resp_right'
     first_lick_df["first_resp_right"] = first_lick_df["first_trial_response"].apply(
         lambda x: 1 if x == "right" else 0)
-
-    # Trova le posizioni dei tick per 'left' e 'right'
-    # left_ticks = first_lick_df[first_lick_df["first_resp_left"] == 1].trial
-    # right_ticks = first_lick_df[first_lick_df["first_resp_right"] == 1].trial
 
     # Plotta i tick marks per 'left' e 'right'
     for i, row in first_lick_df.iterrows():
@@ -845,34 +779,6 @@ def daily_report_S4_5(df, save_path, date):
     if len(df) % blocks_lenght != 0:
         axes.vlines(x=len(df), ymin=-0.2, ymax=1.2,
                     colors='grey', linestyles='dashed', alpha=0.5)
-
-    # # Right: omission and misses
-    # for trial, param in enumerate(omission_df['right_omission']):
-    #     if param == 1:
-    #         # Sostituisci 'trial' con la posizione x corretta
-    #         plt.scatter(trial, -0.2, color='purple', marker="X", s=30)
-    #     for trial, param in enumerate(omission_df['right_miss']):
-    #         if param == 1:
-    #             # Sostituisci 'trial' con la posizione x corretta
-    #             plt.scatter(trial, 1.3, color='purple',  marker="x", s=30)
-    #
-    # # left: omission and misses
-    # for trial, param in enumerate(omission_df['left_omission']):
-    #     if param == 1:
-    #         # Sostituisci 'trial' con la posizione x corretta
-    #         plt.scatter(trial, 1.4, color='green', marker="X", s=30)
-    #
-    # # Aggiungi i ticks per i parametri di sinistra
-    # for trial, param in enumerate(omission_df['left_miss']):
-    #     if param == 1:
-    #         # Sostituisci 'trial' con la posizione x corretta
-    #         plt.scatter(trial, 1.3, color='green', marker="x", s=30)
-    #
-    # # central thicks: omission and misses
-    # for trial, param in enumerate(omission_df['general_omission']):
-    #     if param == 1:
-    #         # Sostituisci 'trial' con la posizione x corretta
-    #         plt.scatter(trial, 0.5, color='black',  marker="X", s=30)
 
     # Aggiungi i ticks per i parametri di sinistra
     for trial, param in enumerate(omission_df['central_miss']):
