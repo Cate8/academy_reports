@@ -3,12 +3,12 @@ from academy_reports import settings
 from academy_reports import arg
 import os
 import pandas as pd
-from datetime import timedelta, datetime
+from datetime import datetime
 from tasks.lickteaching_daily import lickteaching_daily
 from tasks.touchteaching_daily import touchteaching_daily
 from tasks.stagetraining_daily import stagetraining_daily
-from tasks.intersession import intersession
-from tasks.ecohab_report import ecohab_report
+from tasks.S1_daily_Balma import S1_daily
+from tasks.old.intersession import intersession
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -193,7 +193,7 @@ def main():
             #sort, only analyze general csvs
             subject = os.path.basename(path)
             print(subject)
-            if len(subject) <= 8:
+            if len(subject) <= 10:
                 df = pd.read_csv(path, sep=';')
                 dfs.append(df)
 
@@ -232,16 +232,18 @@ def main():
                     save_path = os.path.join(save_directory, file_name)
 
                     if not os.path.exists(save_path): #ONLY DONE IF NOT EXISTS
-                            if task == 'LickTeaching':
-                                lickteaching_daily(session.copy(), save_path, date)
-                            elif task == 'TouchTeaching':
-                                touchteaching_daily(session.copy(), save_path, date)
-                            elif task[0:13] == 'StageTraining':
-                                stagetraining_daily(session.copy(), save_path, date)
-                            elif task == 'S1':
-                                S1_daily(session.copy(), save_path, date)
-                            else:
-                                print('Task not found for file:', path, 'task:', task)
+
+                        print("gfsdjg")
+                        if task == 'LickTeaching':
+                            lickteaching_daily(session.copy(), save_path, date)
+                        elif task == 'TouchTeaching':
+                            touchteaching_daily(session.copy(), save_path, date)
+                        elif task[0:13] == 'StageTraining':
+                            stagetraining_daily(session.copy(), save_path, date)
+                        elif task == 'S1':
+                            S1_daily(session.copy(), save_path, date)
+                        else:
+                            print('Task not found for file:', path, 'task:', task)
 
                     else:
                         print('Already done!')

@@ -117,11 +117,10 @@ def main(arg):
 
             if raw_df['TRIAL'].iloc[-1] > 1:
 
-                if arg == ['all']:
-                    clean_df = transform(raw_df)
-                    clean_df.to_csv(clean_path, sep=';', header=True, index=False)
-                else:
-                    clean_df = pd.read_csv(clean_path, sep=';')
+
+                clean_df = transform(raw_df)
+                clean_df.to_csv(clean_path, sep=';', header=True, index=False)
+
 
                 if df_all is None:
                     clean_df.insert(loc=0, column='session', value=1)
